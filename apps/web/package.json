@@ -16,7 +16,8 @@
     "lucide-react": "^0.441.0",
     "@clerk/nextjs": "^6.0.0",
     "@life-id/ui": "workspace:*",
-    "@life-id/types": "workspace:*"
+    "@life-id/types": "workspace:*",
+    "@life-id/db": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.5.0",
