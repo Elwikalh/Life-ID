@@ -14,6 +14,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "lucide-react": "^0.441.0",
+    "@clerk/nextjs": "^6.0.0",
     "@life-id/ui": "workspace:*",
     "@life-id/types": "workspace:*"
   },
