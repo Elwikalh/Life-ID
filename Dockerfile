@@ -1,5 +1,6 @@
 # ---------- Base ----------
 FROM node:20-slim AS base
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -7,7 +8,6 @@ WORKDIR /app
 
 # ---------- Build ----------
 FROM base AS build
-# Clerk publishable key لازم يكون موجود وقت البناء (متغيرات NEXT_PUBLIC)
 ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 ARG NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 ARG NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
@@ -21,15 +21,13 @@ ENV NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=$NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL
 COPY . .
 RUN mkdir -p apps/web/public
 RUN pnpm install --no-frozen-lockfile --filter "@life-id/web..."
+RUN pnpm --filter @life-id/db exec prisma generate
 RUN pnpm --filter @life-id/web build
 
 # ---------- Runner ----------
-FROM base AS runner
+FROM build AS runner
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
 WORKDIR /app
-COPY --from=build /app/apps/web/.next/standalone ./
-COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=build /app/apps/web/public ./apps/web/public
 EXPOSE 3000
-CMD ["node", "apps/web/server.js"]
+CMD ["sh", "-c", "pnpm --filter @life-id/db exec prisma db push --skip-generate --accept-data-loss && pnpm --filter @life-id/web start"]
