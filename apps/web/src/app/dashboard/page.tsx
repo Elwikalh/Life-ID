@@ -1,4 +1,8 @@
+import { currentUser } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
 import { Card } from "@life-id/ui"
+import type { Role } from "@life-id/types"
+import { ROLE_LABELS } from "../../lib/roles"
 
 const stats = [
   { label: "المرضى", value: "—" },
@@ -7,10 +11,19 @@ const stats = [
   { label: "الإيرادات", value: "—" }
 ]
 
-export default function Dashboard() {
+export default async function Dashboard() {
+  const user = await currentUser()
+  if (!user) redirect("/sign-in")
+
+  const meta = user.publicMetadata as { role?: Role; status?: string }
+  if (!meta.role) redirect("/onboarding")
+  if (meta.status !== "approved") redirect("/pending")
+
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <h1 className="font-display text-2xl font-extrabold">لوحة التحكم (Super Admin)</h1>
+      <h1 className="font-display text-2xl font-extrabold">
+        لوحة التحكم ({ROLE_LABELS[meta.role]})
+      </h1>
       <div className="mt-6 grid gap-4 sm:grid-cols-4">
         {stats.map((s) => (
           <Card key={s.label}>
