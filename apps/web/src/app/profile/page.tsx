@@ -111,7 +111,7 @@ export default async function ProfilePage({
       الشراكات
     </span>
     <p className="mt-0.5 text-xs text-slate-500">
-      الأطباء والصيدليات والمعامل المرتبطين ونسب الخصم
+الصيدليات والمعامل والمستشفيات وشركات الأدوية ونِسبك
     </p>
   </div>
 </Link>
