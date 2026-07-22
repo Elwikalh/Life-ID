@@ -8,8 +8,8 @@ import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 export default function SiteHeader() {
   const pathname = usePathname()
 
-  // The landing page ("/") has its own custom navbar, so hide the app header there.
-  if (pathname === "/") return null
+  // Landing ("/") and the admin dashboard have their own chrome, so hide the app header there.
+  if (pathname === "/" || pathname.startsWith("/admin")) return null
 
   return (
     <header className="flex items-center justify-between border-b border-black/5 px-6 py-3">
