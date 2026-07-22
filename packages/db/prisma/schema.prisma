@@ -34,6 +34,9 @@ model User {
   fullName      String
   email         String?       @unique
   phone         String?       @unique
+specialty       String?
+bio             String?
+consultationFee Int?
   medicalId     MedicalId?
   appointments  Appointment[] @relation("PatientAppointments")
   provided      Appointment[] @relation("ProviderAppointments")
