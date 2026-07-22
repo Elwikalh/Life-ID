@@ -29,6 +29,21 @@ enum AppointmentStatus {
   cancelled
 }
 
+enum RxStatus {
+  draft
+  routed
+  accepted
+  unavailable
+  confirmed
+  delivered
+  cancelled
+}
+
+enum DeliveryMethod {
+  pickup
+  home
+}
+
 model User {
   id              String  @id @default(cuid())
   role            Role
@@ -88,12 +103,24 @@ model Appointment {
 }
 
 model Prescription {
-  id            String      @id @default(cuid())
-  appointment   Appointment @relation(fields: [appointmentId], references: [id])
-  appointmentId String      @unique
-  doctorId      String
-  items         Json
-  createdAt     DateTime    @default(now())
+  id                String          @id @default(cuid())
+  appointment       Appointment     @relation(fields: [appointmentId], references: [id])
+  appointmentId     String          @unique
+  doctorId          String
+  patientId         String?
+  items             Json
+  status            RxStatus        @default(draft)
+  currentPharmacyId String?
+  triedPharmacyIds  String[]        @default([])
+  deliveryMethod    DeliveryMethod?
+  patientAddress    String?
+  patientPhone      String?
+  routingNote       String?
+  createdAt         DateTime        @default(now())
+
+  @@index([doctorId])
+  @@index([patientId])
+  @@index([currentPharmacyId])
 }
 
 model ContactMessage {
@@ -188,4 +215,16 @@ model RepVisit {
   createdAt  DateTime   @default(now())
 
   @@index([repId])
+}
+
+model PharmacyLink {
+  id           String   @id @default(cuid())
+  doctorId     String
+  pharmacyId   String
+  pharmacyName String
+  priority     Int      @default(1)
+  createdAt    DateTime @default(now())
+
+  @@unique([doctorId, pharmacyId])
+  @@index([doctorId])
 }
