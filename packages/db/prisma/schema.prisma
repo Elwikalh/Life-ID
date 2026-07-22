@@ -39,7 +39,6 @@ model User {
   bio             String?
   consultationFee Int?
 
-  // بيانات الخدمة (Edit service)
   branchesCount  Int?
   city           String?
   clinicLocation String?
@@ -56,6 +55,7 @@ model User {
   invitations    Invitation[]
   photo          UserPhoto?
   pharmaProducts PharmaProduct[]
+  medicalReps    MedicalRep[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 }
@@ -158,4 +158,16 @@ model PharmaProduct {
 
   @@index([companyId])
 }
-// redeploy
+
+model MedicalRep {
+  id        String   @id @default(cuid())
+  company   User     @relation(fields: [companyId], references: [id])
+  companyId String
+  name      String
+  phone     String?
+  region    String?
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+}
