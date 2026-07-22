@@ -5,6 +5,7 @@ import type { Role } from "@life-id/types"
 import { ROLE_LABELS } from "../../lib/roles"
 import { prisma } from "@life-id/db"
 import { getProviderData, getPatientData } from "../../lib/dashboard"
+import { setAppointmentStatus } from "../../lib/appointmentActions"
 import {
   CalendarDays,
   Clock,
@@ -70,6 +71,33 @@ function StatusBadge({ status }: { status: string }) {
   )
 }
 
+function ActionForm({
+  id,
+  status,
+  label,
+  className,
+}: {
+  id: string
+  status: string
+  label: string
+  className: string
+}) {
+  return (
+    <form action={setAppointmentStatus}>
+      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="status" value={status} />
+      <button type="submit" className={className}>
+        {label}
+      </button>
+    </form>
+  )
+}
+
+const BTN_PRIMARY =
+  "rounded-lg bg-brand-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-brand-600"
+const BTN_GHOST =
+  "rounded-lg border border-black/10 px-2.5 py-1 text-xs font-medium text-slate-500 hover:border-danger/40 hover:text-danger"
+
 export default async function Dashboard() {
   const user = await currentUser()
   if (!user) redirect("/sign-in")
@@ -130,12 +158,13 @@ export default async function Dashboard() {
                   <th className="pb-2 text-left font-medium">القيمة</th>
                   <th className="pb-2 text-center font-medium">الحالة</th>
                   <th className="pb-2 text-left font-medium">الموعد</th>
+                  <th className="pb-2 text-center font-medium">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
                 {d.recent.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="py-6 text-center text-slate-400">لا توجد حجوزات بعد</td>
+                    <td colSpan={5} className="py-6 text-center text-slate-400">لا توجد حجوزات بعد</td>
                   </tr>
                 )}
                 {d.recent.map((a) => (
@@ -144,6 +173,25 @@ export default async function Dashboard() {
                     <td className="py-2.5 text-left text-slate-500">{fmt(a.priceEGP)}</td>
                     <td className="py-2.5 text-center"><StatusBadge status={a.status} /></td>
                     <td className="py-2.5 text-left text-slate-400">{fmtDate(a.scheduledAt)}</td>
+                    <td className="py-2.5">
+                      <div className="flex justify-center gap-1.5">
+                        {a.status === "pending" && (
+                          <>
+                            <ActionForm id={a.id} status="confirmed" label="تأكيد" className={BTN_PRIMARY} />
+                            <ActionForm id={a.id} status="cancelled" label="رفض" className={BTN_GHOST} />
+                          </>
+                        )}
+                        {a.status === "confirmed" && (
+                          <>
+                            <ActionForm id={a.id} status="completed" label="إتمام" className={BTN_PRIMARY} />
+                            <ActionForm id={a.id} status="cancelled" label="إلغاء" className={BTN_GHOST} />
+                          </>
+                        )}
+                        {(a.status === "completed" || a.status === "cancelled") && (
+                          <span className="text-slate-300">—</span>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
