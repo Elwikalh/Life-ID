@@ -16,6 +16,7 @@ import {
   Mail,
   Camera,
   Pill,
+  Users,
   Activity,
   ShieldCheck,
   MessageCircle,
@@ -24,7 +25,6 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// قائمة التخصصات للبحث (Autocomplete)
 const SPECIALTIES = [
   "باطنة عامة",
   "أطفال وحديثي الولادة",
@@ -70,7 +70,6 @@ export default async function ProfilePage({
     [u.firstName, u.lastName].filter(Boolean).join(" ") || email || "مستخدم";
   const avatarUrl = u.imageUrl || null;
 
-  // اضمن وجود صف للمستخدم
   try {
     await prisma.user.upsert({
       where: { id: u.id },
@@ -100,7 +99,6 @@ export default async function ProfilePage({
   const isProvider = PROVIDER_ROLES.includes(meta.role);
   const roleLabel = ROLE_LABELS[meta.role];
 
-  // أقسام جاية في خطوات قادمة (موقوفة مؤقتًا — مفيش لينكات مكسورة)
   const sections = [
     { icon: Activity, label: "السجل والأنشطة", desc: "كل الإجراءات والحركات" },
     {
@@ -127,7 +125,6 @@ export default async function ProfilePage({
         </Link>
       </div>
 
-      {/* الهيدر */}
       <div className="mt-4 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div className="h-28 bg-gradient-to-l from-[#1fb2a3] to-[#178f83]" />
         <div className="px-6 pb-6">
@@ -177,7 +174,6 @@ export default async function ProfilePage({
 
       {isProvider ? (
         <>
-          {/* فورم الملف المهني */}
           <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="mb-1 text-lg font-bold text-slate-900">
               الملف المهني
@@ -187,7 +183,6 @@ export default async function ProfilePage({
             </p>
 
             <form action={saveProfile} className="space-y-4">
-              {/* الاسم (للعرض فقط) */}
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   الاسم
@@ -200,7 +195,6 @@ export default async function ProfilePage({
                 </p>
               </div>
 
-              {/* التخصص — بحث/اختيار */}
               <div>
                 <label
                   htmlFor="specialty"
@@ -227,7 +221,6 @@ export default async function ProfilePage({
                 </div>
               </div>
 
-              {/* رقم الهاتف / واتساب */}
               <div>
                 <label
                   htmlFor="phone"
@@ -250,7 +243,6 @@ export default async function ProfilePage({
                 </div>
               </div>
 
-              {/* سعر الكشف */}
               <div>
                 <label
                   htmlFor="consultationFee"
@@ -277,7 +269,6 @@ export default async function ProfilePage({
                 </p>
               </div>
 
-              {/* نبذة */}
               <div>
                 <label
                   htmlFor="bio"
@@ -307,7 +298,6 @@ export default async function ProfilePage({
             </form>
           </div>
 
-          {/* أقسام إضافية */}
           <div className="mt-6">
             <h2 className="mb-3 text-lg font-bold text-slate-900">
               إدارة الحساب
@@ -364,7 +354,6 @@ export default async function ProfilePage({
                 </div>
               </Link>
 
-              {/* الصورة الشخصية / اللوجو */}
               <Link
                 href="/profile/photo"
                 className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#1fb2a3] hover:shadow-sm"
@@ -426,6 +415,23 @@ export default async function ProfilePage({
                 </span>
                 <p className="mt-0.5 text-xs text-slate-500">
                   سجّل أدوية شركتك ومنتجاتها
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              href="/profile/reps"
+              className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#1fb2a3] hover:shadow-sm"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1fb2a3]/10 text-[#1fb2a3]">
+                <Users className="h-5 w-5" />
+              </span>
+              <div className="flex-1">
+                <span className="text-sm font-semibold text-slate-800">
+                  المناديب الطبيون
+                </span>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  سجّل مناديب شركتك والمناطق اللي بيغطوها
                 </p>
               </div>
             </Link>
