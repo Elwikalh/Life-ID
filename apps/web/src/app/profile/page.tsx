@@ -17,6 +17,7 @@ import {
   Camera,
   Pill,
   Users,
+  BarChart3,
   Activity,
   ShieldCheck,
   MessageCircle,
@@ -432,6 +433,23 @@ export default async function ProfilePage({
                 </span>
                 <p className="mt-0.5 text-xs text-slate-500">
                   سجّل مناديب شركتك والمناطق اللي بيغطوها
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              href="/profile/analytics"
+              className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#1fb2a3] hover:shadow-sm"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1fb2a3]/10 text-[#1fb2a3]">
+                <BarChart3 className="h-5 w-5" />
+              </span>
+              <div className="flex-1">
+                <span className="text-sm font-semibold text-slate-800">
+                  تحليلات الروشتات
+                </span>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  مين الأطباء اللي وصفوا أدويتك وأكتر منتج مطلوب
                 </p>
               </div>
             </Link>
