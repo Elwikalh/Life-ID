@@ -54,6 +54,7 @@ model User {
   provided     Appointment[] @relation("ProviderAppointments")
   partnerships Partnership[]
   invitations  Invitation[]
+  photo        UserPhoto?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -133,4 +134,12 @@ model Invitation {
   createdAt    DateTime @default(now())
 
   @@index([inviterId])
+}
+
+model UserPhoto {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  url       String
+  updatedAt DateTime @updatedAt
 }
