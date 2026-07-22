@@ -15,6 +15,7 @@ import {
   Handshake,
   Mail,
   Camera,
+  Pill,
   Activity,
   ShieldCheck,
   MessageCircle,
@@ -408,6 +409,28 @@ export default async function ProfilePage({
             </div>
           </div>
         </>
+      ) : meta.role === "pharma_company" ? (
+        <div className="mt-6">
+          <h2 className="mb-3 text-lg font-bold text-slate-900">إدارة الشركة</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Link
+              href="/profile/products"
+              className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#1fb2a3] hover:shadow-sm"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1fb2a3]/10 text-[#1fb2a3]">
+                <Pill className="h-5 w-5" />
+              </span>
+              <div className="flex-1">
+                <span className="text-sm font-semibold text-slate-800">
+                  كتالوج الأدوية
+                </span>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  سجّل أدوية شركتك ومنتجاتها
+                </p>
+              </div>
+            </Link>
+          </div>
+        </div>
       ) : (
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
           بياناتك الأساسية بتتسجّل تلقائيًا. البروفايل التفصيلي متاح لمقدمي
