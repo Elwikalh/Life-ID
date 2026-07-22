@@ -97,6 +97,8 @@ const BTN_PRIMARY =
   "rounded-lg bg-brand-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-brand-600"
 const BTN_GHOST =
   "rounded-lg border border-black/10 px-2.5 py-1 text-xs font-medium text-slate-500 hover:border-danger/40 hover:text-danger"
+const BTN_RX =
+  "rounded-lg border border-brand-200 px-2.5 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50"
 
 export default async function Dashboard() {
   const user = await currentUser()
@@ -185,9 +187,13 @@ export default async function Dashboard() {
                           <>
                             <ActionForm id={a.id} status="completed" label="إتمام" className={BTN_PRIMARY} />
                             <ActionForm id={a.id} status="cancelled" label="إلغاء" className={BTN_GHOST} />
+                            <Link href={"/rx/" + a.id} className={BTN_RX}>روشتة</Link>
                           </>
                         )}
-                        {(a.status === "completed" || a.status === "cancelled") && (
+                        {a.status === "completed" && (
+                          <Link href={"/rx/" + a.id} className={BTN_RX}>روشتة</Link>
+                        )}
+                        {a.status === "cancelled" && (
                           <span className="text-slate-300">—</span>
                         )}
                       </div>
