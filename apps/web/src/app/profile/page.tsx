@@ -18,6 +18,7 @@ import {
   Pill,
   Users,
   BarChart3,
+  Briefcase,
   Activity,
   ShieldCheck,
   MessageCircle,
@@ -450,6 +451,28 @@ export default async function ProfilePage({
                 </span>
                 <p className="mt-0.5 text-xs text-slate-500">
                   مين الأطباء اللي وصفوا أدويتك وأكتر منتج مطلوب
+                </p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      ) : meta.role === "medical_rep" ? (
+        <div className="mt-6">
+          <h2 className="mb-3 text-lg font-bold text-slate-900">بوابة المندوب</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Link
+              href="/rep"
+              className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#1fb2a3] hover:shadow-sm"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1fb2a3]/10 text-[#1fb2a3]">
+                <Briefcase className="h-5 w-5" />
+              </span>
+              <div className="flex-1">
+                <span className="text-sm font-semibold text-slate-800">
+                  لوحة المندوب
+                </span>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  اربط حسابك بشركتك وسجّل زياراتك للأطباء
                 </p>
               </div>
             </Link>
