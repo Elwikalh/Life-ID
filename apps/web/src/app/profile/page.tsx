@@ -100,7 +100,6 @@ export default async function ProfilePage({
 
   // أقسام جاية في خطوات قادمة (موقوفة مؤقتًا — مفيش لينكات مكسورة)
   const sections = [
-    { icon: Mail, label: "الدعوات", desc: "دعوة أطباء ومقدمي خدمة للانضمام" },
     { icon: Activity, label: "السجل والأنشطة", desc: "كل الإجراءات والحركات" },
     {
       icon: MessageCircle,
@@ -342,6 +341,23 @@ export default async function ProfilePage({
                   </span>
                   <p className="mt-0.5 text-xs text-slate-500">
                     الصيدليات والمعامل والمستشفيات وشركات الأدوية ونِسبك
+                  </p>
+                </div>
+              </Link>
+
+              <Link
+                href="/profile/invitations"
+                className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#1fb2a3] hover:shadow-sm"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1fb2a3]/10 text-[#1fb2a3]">
+                  <Mail className="h-5 w-5" />
+                </span>
+                <div className="flex-1">
+                  <span className="text-sm font-semibold text-slate-800">
+                    الدعوات
+                  </span>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    دعوة زمايلك الأطباء ومقدمي الخدمة للانضمام
                   </p>
                 </div>
               </Link>
