@@ -160,14 +160,16 @@ model PharmaProduct {
 }
 
 model MedicalRep {
-  id        String   @id @default(cuid())
-  company   User     @relation(fields: [companyId], references: [id])
-  companyId String
-  name      String
-  phone     String?
-  region    String?
-  note      String?
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  company      User     @relation(fields: [companyId], references: [id])
+  companyId    String
+  name         String
+  phone        String?
+  region       String?
+  note         String?
+  linkCode     String?  @unique
+  linkedUserId String?  @unique
+  createdAt    DateTime @default(now())
 
   @@index([companyId])
 }
