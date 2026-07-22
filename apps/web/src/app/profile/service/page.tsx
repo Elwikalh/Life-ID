@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { Role } from "@life-id/types";
 import { prisma } from "@life-id/db";
 import { PROVIDER_ROLES } from "../../../lib/providers";
-import { saveService, WORK_DAYS } from "../../../lib/serviceActions";
+import { saveService } from "../../../lib/serviceActions"
 import {
   ArrowRight,
   CheckCircle2,
@@ -19,6 +19,19 @@ import {
 export const dynamic = "force-dynamic";
 
 // المحافظات — حقل ثابت/متكرر فبيكون اختيار من قائمة بحث
+// أيام العمل (معرّفة هنا لأن ملف "use server" ما يصحّش يصدّر قيم غير async)
+const WORK_DAYS = [
+  "السبت",
+  "الأحد",
+  "الاثنين",
+  "الثلاثاء",
+  "الأربعاء",
+  "الخميس",
+  "الجمعة",
+]
+
+// المحافظات — حقل ثابت/متكرر فبيكون اختيار من قائمة بحث
+const CITIES = [
 const CITIES = [
   "القاهرة",
   "الجيزة",
