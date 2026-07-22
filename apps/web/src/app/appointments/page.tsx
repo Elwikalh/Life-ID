@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@life-id/db"
-import { CalendarPlus, X } from "lucide-react"
+import { CalendarPlus, X, Pill } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
@@ -116,6 +116,14 @@ export default async function AppointmentsPage() {
                   >
                     {STATUS_LABELS[a.status] ?? a.status}
                   </span>
+                  {a.status === "completed" ? (
+                    <Link
+                      href={"/rx/" + a.id}
+                      className="inline-flex items-center gap-1 rounded-lg border border-brand-200 px-2.5 py-1.5 text-xs font-medium text-brand-600 transition hover:bg-brand-50"
+                    >
+                      <Pill className="h-3.5 w-3.5" /> الروشتة
+                    </Link>
+                  ) : null}
                   {canCancel ? (
                     <form action={cancelAppointment}>
                       <input type="hidden" name="id" value={a.id} />
