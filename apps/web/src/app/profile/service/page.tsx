@@ -1,9 +1,9 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import type { Role } from "@life-id/types";
-import { prisma } from "@life-id/db";
-import { PROVIDER_ROLES } from "../../../lib/providers";
+import { currentUser } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
+import Link from "next/link"
+import type { Role } from "@life-id/types"
+import { prisma } from "@life-id/db"
+import { PROVIDER_ROLES } from "../../../lib/providers"
 import { saveService } from "../../../lib/serviceActions"
 import {
   ArrowRight,
@@ -14,12 +14,11 @@ import {
   CalendarDays,
   Truck,
   Wallet,
-} from "lucide-react";
+} from "lucide-react"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
-// المحافظات — حقل ثابت/متكرر فبيكون اختيار من قائمة بحث
-// أيام العمل (معرّفة هنا لأن ملف "use server" ما يصحّش يصدّر قيم غير async)
+// أيام العمل
 const WORK_DAYS = [
   "السبت",
   "الأحد",
@@ -30,7 +29,7 @@ const WORK_DAYS = [
   "الجمعة",
 ]
 
-// المحافظات — حقل ثابت/متكرر فبيكون اختيار من قائمة بحث
+// المحافظات — اختيار من قائمة بحث
 const CITIES = [
   "القاهرة",
   "الجيزة",
@@ -59,45 +58,45 @@ const CITIES = [
   "الوادي الجديد",
   "شمال سيناء",
   "جنوب سيناء",
-];
+]
 
 // أوقات العمل (كل نص ساعة)
 const TIME_OPTIONS: string[] = (() => {
-  const out: string[] = [];
+  const out: string[] = []
   for (let h = 0; h < 24; h++) {
     for (const m of [0, 30]) {
-      const hh = String(h).padStart(2, "0");
-      const mm = String(m).padStart(2, "0");
-      out.push(`${hh}:${mm}`);
+      const hh = String(h).padStart(2, "0")
+      const mm = String(m).padStart(2, "0")
+      out.push(`${hh}:${mm}`)
     }
   }
-  return out;
-})();
+  return out
+})()
 
 export default async function EditServicePage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: Promise<{ saved?: string }>
 }) {
-  const u = await currentUser();
-  if (!u) redirect("/sign-in");
-  const meta = u.publicMetadata as { role?: Role };
-  if (!meta.role) redirect("/onboarding");
-  if (!PROVIDER_ROLES.includes(meta.role)) redirect("/profile");
+  const u = await currentUser()
+  if (!u) redirect("/sign-in")
+  const meta = u.publicMetadata as { role?: Role }
+  if (!meta.role) redirect("/onboarding")
+  if (!PROVIDER_ROLES.includes(meta.role)) redirect("/profile")
 
-  const sp = await searchParams;
-  const saved = sp?.saved === "1";
+  const sp = await searchParams
+  const saved = sp?.saved === "1"
 
   let svc: {
-    branchesCount: number | null;
-    city: string | null;
-    clinicLocation: string | null;
-    workingDays: string[];
-    workFrom: string | null;
-    workTo: string | null;
-    homeService: boolean;
-    paymentPolicy: string | null;
-  } | null = null;
+    branchesCount: number | null
+    city: string | null
+    clinicLocation: string | null
+    workingDays: string[]
+    workFrom: string | null
+    workTo: string | null
+    homeService: boolean
+    paymentPolicy: string | null
+  } | null = null
   try {
     svc = await prisma.user.findUnique({
       where: { id: u.id },
@@ -111,13 +110,13 @@ export default async function EditServicePage({
         homeService: true,
         paymentPolicy: true,
       },
-    });
+    })
   } catch {}
 
-  const selectedDays = new Set(svc?.workingDays ?? []);
+  const selectedDays = new Set(svc?.workingDays ?? [])
   const fieldCls =
-    "w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-9 pl-3 text-sm outline-none transition focus:border-[#1fb2a3] focus:ring-2 focus:ring-[#1fb2a3]/20";
-  const labelCls = "mb-1 block text-sm font-medium text-slate-700";
+    "w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-9 pl-3 text-sm outline-none transition focus:border-[#1fb2a3] focus:ring-2 focus:ring-[#1fb2a3]/20"
+  const labelCls = "mb-1 block text-sm font-medium text-slate-700"
 
   return (
     <div dir="rtl" className="mx-auto max-w-3xl px-4 pb-16">
@@ -338,5 +337,5 @@ export default async function EditServicePage({
         </form>
       </div>
     </div>
-  );
+  )
 }
