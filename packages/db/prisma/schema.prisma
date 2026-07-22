@@ -160,16 +160,32 @@ model PharmaProduct {
 }
 
 model MedicalRep {
-  id           String   @id @default(cuid())
-  company      User     @relation(fields: [companyId], references: [id])
+  id           String     @id @default(cuid())
+  company      User       @relation(fields: [companyId], references: [id])
   companyId    String
   name         String
   phone        String?
   region       String?
   note         String?
-  linkCode     String?  @unique
-  linkedUserId String?  @unique
-  createdAt    DateTime @default(now())
+  linkCode     String?    @unique
+  linkedUserId String?    @unique
+  visits       RepVisit[]
+  createdAt    DateTime   @default(now())
 
   @@index([companyId])
+}
+
+model RepVisit {
+  id         String     @id @default(cuid())
+  rep        MedicalRep @relation(fields: [repId], references: [id], onDelete: Cascade)
+  repId      String
+  doctorName String
+  specialty  String?
+  region     String?
+  outcome    String?
+  note       String?
+  visitDate  DateTime   @default(now())
+  createdAt  DateTime   @default(now())
+
+  @@index([repId])
 }
