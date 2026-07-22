@@ -30,11 +30,11 @@ enum AppointmentStatus {
 }
 
 model User {
-  id              String   @id @default(cuid())
+  id              String  @id @default(cuid())
   role            Role
   fullName        String
-  email           String?  @unique
-  phone           String?  @unique
+  email           String? @unique
+  phone           String? @unique
   specialty       String?
   bio             String?
   consultationFee Int?
@@ -49,14 +49,15 @@ model User {
   homeService    Boolean  @default(false)
   paymentPolicy  String?
 
-  medicalId    MedicalId?
-  appointments Appointment[] @relation("PatientAppointments")
-  provided     Appointment[] @relation("ProviderAppointments")
-  partnerships Partnership[]
-  invitations  Invitation[]
-  photo        UserPhoto?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  medicalId      MedicalId?
+  appointments   Appointment[]   @relation("PatientAppointments")
+  provided       Appointment[]   @relation("ProviderAppointments")
+  partnerships   Partnership[]
+  invitations    Invitation[]
+  photo          UserPhoto?
+  pharmaProducts PharmaProduct[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 model MedicalId {
@@ -142,4 +143,18 @@ model UserPhoto {
   userId    String   @unique
   url       String
   updatedAt DateTime @updatedAt
+}
+
+model PharmaProduct {
+  id         String   @id @default(cuid())
+  company    User     @relation(fields: [companyId], references: [id])
+  companyId  String
+  name       String
+  category   String?
+  dosageForm String?
+  price      Int?
+  note       String?
+  createdAt  DateTime @default(now())
+
+  @@index([companyId])
 }
