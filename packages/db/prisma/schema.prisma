@@ -40,19 +40,20 @@ model User {
   consultationFee Int?
 
   // بيانات الخدمة (Edit service)
-  branchesCount   Int?
-  city            String?
-  clinicLocation  String?
-  workingDays     String[] @default([])
-  workFrom        String?
-  workTo          String?
-  homeService     Boolean  @default(false)
-  paymentPolicy   String?
+  branchesCount  Int?
+  city           String?
+  clinicLocation String?
+  workingDays    String[] @default([])
+  workFrom       String?
+  workTo         String?
+  homeService    Boolean  @default(false)
+  paymentPolicy  String?
 
   medicalId    MedicalId?
   appointments Appointment[] @relation("PatientAppointments")
   provided     Appointment[] @relation("ProviderAppointments")
   partnerships Partnership[]
+  invitations  Invitation[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -117,4 +118,19 @@ model Partnership {
   createdAt    DateTime @default(now())
 
   @@index([ownerId])
+}
+
+model Invitation {
+  id           String   @id @default(cuid())
+  inviter      User     @relation(fields: [inviterId], references: [id])
+  inviterId    String
+  inviteeName  String
+  inviteeType  String
+  contact      String?
+  requestedPct Int?
+  message      String?
+  status       String   @default("pending")
+  createdAt    DateTime @default(now())
+
+  @@index([inviterId])
 }
