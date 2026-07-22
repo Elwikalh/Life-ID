@@ -5,8 +5,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { prisma } from "@life-id/db"
 
-// ملاحظة: ملف "use server" ممكن يصدّر دوال async بس.
-// عشان كدا WORK_DAYS معرّفة هنا داخلياً (مفيش export) ومكررة في الصفحة.
+// ملف "use server" ممكن يصدّر دوال async بس، عشان كدا WORK_DAYS محلية (مفيش export).
 const WORK_DAYS = [
   "السبت",
   "الأحد",
