@@ -158,3 +158,4 @@ model PharmaProduct {
 
   @@index([companyId])
 }
+// redeploy
