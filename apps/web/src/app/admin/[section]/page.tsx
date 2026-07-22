@@ -29,6 +29,13 @@ export default async function AdminSectionPage({
   const cfg = SECTIONS[section]
   if (!cfg) notFound()
 
-  const { q } = await searchParams
-  return <UsersListPage title={cfg.title} roles={cfg.roles} query={q} />
+ const { q } = await searchParams
+return (
+  <UsersListPage
+    title={cfg.title}
+    roles={cfg.roles}
+    query={q}
+    basePath={"/admin/" + section}
+  />
+)
 }
