@@ -12,6 +12,7 @@ import {
   Pill,
   Inbox,
   ClipboardList,
+  Calculator,
 } from "lucide-react"
 import {
   SignedIn,
@@ -58,6 +59,12 @@ export default function SiteHeader() {
       label: "روشتات واردة",
       icon: Inbox,
       show: role === "pharmacy",
+    },
+    {
+      href: "/profile/commissions",
+      label: "العمولات",
+      icon: Calculator,
+      show: !!role && !isPatient,
     },
     {
       href: "/profile",
