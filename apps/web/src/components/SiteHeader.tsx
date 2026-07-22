@@ -9,6 +9,9 @@ import {
   CalendarDays,
   QrCode,
   UserCircle,
+  Pill,
+  Inbox,
+  ClipboardList,
 } from "lucide-react"
 import {
   SignedIn,
@@ -31,9 +34,37 @@ export default function SiteHeader() {
   const navLinks = [
     { href: "/dashboard", label: "لوحتي", icon: LayoutDashboard, show: !!role },
     { href: "/search", label: "ابحث واحجز", icon: Search, show: isPatient },
-    { href: "/appointments", label: "حجوزاتي", icon: CalendarDays, show: isPatient },
+    {
+      href: "/appointments",
+      label: "حجوزاتي",
+      icon: CalendarDays,
+      show: isPatient,
+    },
     { href: "/id", label: "بطاقتي", icon: QrCode, show: isPatient },
-    { href: "/profile", label: "بروفايلي", icon: UserCircle, show: !!role && !isPatient },
+    {
+      href: "/my-prescriptions",
+      label: "روشتاتي",
+      icon: ClipboardList,
+      show: isPatient,
+    },
+    {
+      href: "/pharmacies",
+      label: "صيدلياتي",
+      icon: Pill,
+      show: role === "doctor",
+    },
+    {
+      href: "/pharmacy-inbox",
+      label: "روشتات واردة",
+      icon: Inbox,
+      show: role === "pharmacy",
+    },
+    {
+      href: "/profile",
+      label: "بروفايلي",
+      icon: UserCircle,
+      show: !!role && !isPatient,
+    },
   ].filter((l) => l.show)
 
   return (
