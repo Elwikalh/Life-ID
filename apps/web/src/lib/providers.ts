@@ -20,12 +20,66 @@ export type ProviderCard = {
   specialty: string | null
   consultationFee: number | null
   bio: string | null
+  city: string | null
+  workingDays: string[]
+  workFrom: string | null
+  workTo: string | null
+  homeService: boolean
 }
 
-export async function searchProviders(q?: string, role?: string): Promise<ProviderCard[]> {
+const SELECT = {
+  id: true,
+  fullName: true,
+  role: true,
+  specialty: true,
+  consultationFee: true,
+  bio: true,
+  city: true,
+  workingDays: true,
+  workFrom: true,
+  workTo: true,
+  homeService: true,
+} as const
+
+type ProviderRow = {
+  id: string
+  fullName: string
+  role: string
+  specialty: string | null
+  consultationFee: number | null
+  bio: string | null
+  city: string | null
+  workingDays: string[]
+  workFrom: string | null
+  workTo: string | null
+  homeService: boolean
+}
+
+function toCard(r: ProviderRow): ProviderCard {
+  return {
+    id: r.id,
+    fullName: r.fullName,
+    role: r.role as Role,
+    specialty: r.specialty ?? null,
+    consultationFee: r.consultationFee ?? null,
+    bio: r.bio ?? null,
+    city: r.city ?? null,
+    workingDays: r.workingDays ?? [],
+    workFrom: r.workFrom ?? null,
+    workTo: r.workTo ?? null,
+    homeService: r.homeService ?? false,
+  }
+}
+
+export async function searchProviders(
+  q?: string,
+  role?: string,
+): Promise<ProviderCard[]> {
   try {
     const roleFilter =
-      role && PROVIDER_ROLES.includes(role as Role) ? [role as Role] : PROVIDER_ROLES
+      role && PROVIDER_ROLES.includes(role as Role)
+        ? [role as Role]
+        : PROVIDER_ROLES
     const rows = await prisma.user.findMany({
       where: {
         role: { in: roleFilter },
@@ -33,25 +87,11 @@ export async function searchProviders(q?: string, role?: string): Promise<Provid
           ? { fullName: { contains: q.trim(), mode: "insensitive" as const } }
           : {}),
       },
-      select: {
-        id: true,
-        fullName: true,
-        role: true,
-        specialty: true,
-        consultationFee: true,
-        bio: true,
-      },
+      select: SELECT,
       orderBy: { fullName: "asc" },
       take: 60,
     })
-    return rows.map((r) => ({
-      id: r.id,
-      fullName: r.fullName,
-      role: r.role as Role,
-      specialty: r.specialty ?? null,
-      consultationFee: r.consultationFee ?? null,
-      bio: r.bio ?? null,
-    }))
+    return rows.map(toCard)
   } catch {
     return []
   }
@@ -59,26 +99,9 @@ export async function searchProviders(q?: string, role?: string): Promise<Provid
 
 export async function getProvider(id: string): Promise<ProviderCard | null> {
   try {
-    const r = await prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        fullName: true,
-        role: true,
-        specialty: true,
-        consultationFee: true,
-        bio: true,
-      },
-    })
+    const r = await prisma.user.findUnique({ where: { id }, select: SELECT })
     if (!r || !PROVIDER_ROLES.includes(r.role as Role)) return null
-    return {
-      id: r.id,
-      fullName: r.fullName,
-      role: r.role as Role,
-      specialty: r.specialty ?? null,
-      consultationFee: r.consultationFee ?? null,
-      bio: r.bio ?? null,
-    }
+    return toCard(r)
   } catch {
     return null
   }
