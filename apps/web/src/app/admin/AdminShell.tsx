@@ -41,7 +41,7 @@ const items: Item[] = [
   { label: "المندوبين", icon: UserRound, href: "/admin/representatives" },
   { label: "الشركاء", icon: Handshake },
   { label: "المديرين", icon: ShieldCheck, href: "/admin/admins" },
-  { label: "المالية", icon: Wallet },
+{ label: "المالية", icon: Wallet, href: "/admin/finance" },
   { label: "الإدارة", icon: Settings },
   { label: "النشاطات", icon: Activity },
   { label: "تواصل معنا", icon: Headphones },
