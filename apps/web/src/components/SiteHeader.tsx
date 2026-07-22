@@ -8,6 +8,7 @@ import {
   Search,
   CalendarDays,
   QrCode,
+  UserCircle,
 } from "lucide-react"
 import {
   SignedIn,
@@ -32,6 +33,7 @@ export default function SiteHeader() {
     { href: "/search", label: "ابحث واحجز", icon: Search, show: isPatient },
     { href: "/appointments", label: "حجوزاتي", icon: CalendarDays, show: isPatient },
     { href: "/id", label: "بطاقتي", icon: QrCode, show: isPatient },
+    { href: "/profile", label: "بروفايلي", icon: UserCircle, show: !!role && !isPatient },
   ].filter((l) => l.show)
 
   return (
