@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { Role } from "@life-id/types";
 import { prisma } from "@life-id/db";
-import { addRep, deleteRep } from "../../../lib/repActions";
+import { addRep, deleteRep, generateLinkCode } from "../../../lib/repActions";
 import {
   ArrowRight,
   Users,
@@ -13,6 +13,8 @@ import {
   AlertTriangle,
   Phone,
   MapPin,
+  KeyRound,
+  Link2,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -65,6 +67,8 @@ export default async function RepsPage({
     phone: string | null;
     region: string | null;
     note: string | null;
+    linkCode: string | null;
+    linkedUserId: string | null;
   }> = [];
   try {
     reps = await prisma.medicalRep.findMany({
@@ -76,6 +80,8 @@ export default async function RepsPage({
         phone: true,
         region: true,
         note: true,
+        linkCode: true,
+        linkedUserId: true,
       },
     });
   } catch {
@@ -101,7 +107,7 @@ export default async function RepsPage({
         <div>
           <h1 className="text-xl font-bold text-slate-900">المناديب الطبيون</h1>
           <p className="text-sm text-slate-500">
-            سجّل مناديب شركتك والمناطق اللي بيغطوها.
+            سجّل مناديب شركتك وشارك كود الربط عشان يربطوا حساباتهم.
           </p>
         </div>
       </div>
@@ -239,42 +245,86 @@ export default async function RepsPage({
             {reps.map((r) => (
               <div
                 key={r.id}
-                className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1fb2a3]/10 text-[#1fb2a3]">
-                  <Users className="h-5 w-5" />
-                </span>
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold text-slate-800">
-                      {r.name}
-                    </span>
-                    {r.region ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#1fb2a3]/10 px-2 py-0.5 text-[10px] font-medium text-[#0f766e]">
-                        <MapPin className="h-3 w-3" />
-                        {r.region}
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1fb2a3]/10 text-[#1fb2a3]">
+                    <Users className="h-5 w-5" />
+                  </span>
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-800">
+                        {r.name}
                       </span>
-                    ) : null}
+                      {r.region ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#1fb2a3]/10 px-2 py-0.5 text-[10px] font-medium text-[#0f766e]">
+                          <MapPin className="h-3 w-3" />
+                          {r.region}
+                        </span>
+                      ) : null}
+                      {r.linkedUserId ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700">
+                          <CheckCircle2 className="h-3 w-3" />
+                          الحساب مرتبط
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                      {r.phone ? (
+                        <span dir="ltr" className="font-medium">
+                          {r.phone}
+                        </span>
+                      ) : null}
+                      {r.note ? <span>{r.note}</span> : null}
+                    </div>
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                    {r.phone ? (
-                      <span dir="ltr" className="font-medium">
-                        {r.phone}
-                      </span>
-                    ) : null}
-                    {r.note ? <span>{r.note}</span> : null}
-                  </div>
+                  <form action={deleteRep}>
+                    <input type="hidden" name="id" value={r.id} />
+                    <button
+                      type="submit"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                      aria-label="حذف"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </form>
                 </div>
-                <form action={deleteRep}>
-                  <input type="hidden" name="id" value={r.id} />
-                  <button
-                    type="submit"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                    aria-label="حذف"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </form>
+
+                <div className="mt-3 border-t border-slate-100 pt-3">
+                  {r.linkedUserId ? (
+                    <div className="flex items-center gap-2 text-xs text-green-700">
+                      <Link2 className="h-4 w-4" />
+                      المندوب ربط حسابه وبيقدر يسجّل زياراته.
+                    </div>
+                  ) : r.linkCode ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="flex items-center gap-1 text-xs text-slate-500">
+                        <KeyRound className="h-4 w-4" />
+                        كود الربط:
+                      </span>
+                      <code
+                        dir="ltr"
+                        className="rounded-lg bg-slate-100 px-3 py-1 text-sm font-bold tracking-widest text-slate-800"
+                      >
+                        {r.linkCode}
+                      </code>
+                      <span className="text-[11px] text-slate-400">
+                        شارك الكود مع المندوب عشان يربط حسابه.
+                      </span>
+                    </div>
+                  ) : (
+                    <form action={generateLinkCode}>
+                      <input type="hidden" name="id" value={r.id} />
+                      <button
+                        type="submit"
+                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-[#1fb2a3] hover:text-[#0f766e]"
+                      >
+                        <KeyRound className="h-4 w-4" />
+                        توليد كود ربط
+                      </button>
+                    </form>
+                  )}
+                </div>
               </div>
             ))}
           </div>
