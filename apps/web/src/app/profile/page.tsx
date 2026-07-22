@@ -14,6 +14,7 @@ import {
   FileText,
   Handshake,
   Mail,
+  Camera,
   Activity,
   ShieldCheck,
   MessageCircle,
@@ -362,14 +363,32 @@ export default async function ProfilePage({
                 </div>
               </Link>
 
+              {/* الصورة الشخصية / اللوجو */}
+              <Link
+                href="/profile/photo"
+                className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#1fb2a3] hover:shadow-sm"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1fb2a3]/10 text-[#1fb2a3]">
+                  <Camera className="h-5 w-5" />
+                </span>
+                <div className="flex-1">
+                  <span className="text-sm font-semibold text-slate-800">
+                    الصورة الشخصية / اللوجو
+                  </span>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    ارفع أو غيّر صورتك أو شعار مكانك
+                  </p>
+                </div>
+              </Link>
+
               {sections.map((s) => {
                 const Icon = s.icon;
                 return (
                   <div
                     key={s.label}
-                    className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 opacity-80"
+                    className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 opacity-70"
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1fb2a3]/10 text-[#1fb2a3]">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
                       <Icon className="h-5 w-5" />
                     </span>
                     <div className="flex-1">
@@ -377,7 +396,7 @@ export default async function ProfilePage({
                         <span className="text-sm font-semibold text-slate-800">
                           {s.label}
                         </span>
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-400">
                           قريبًا
                         </span>
                       </div>
@@ -390,7 +409,7 @@ export default async function ProfilePage({
           </div>
         </>
       ) : (
-        <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm">
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
           بياناتك الأساسية بتتسجّل تلقائيًا. البروفايل التفصيلي متاح لمقدمي
           الخدمة.
         </div>
