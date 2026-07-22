@@ -43,7 +43,7 @@ const items: Item[] = [
   { label: "المديرين", icon: ShieldCheck, href: "/admin/admins" },
 { label: "المالية", icon: Wallet, href: "/admin/finance" },
   { label: "الإدارة", icon: Settings },
-  { label: "النشاطات", icon: Activity },
+{ label: "النشاطات", icon: Activity, href: "/admin/activities" },
   { label: "تواصل معنا", icon: Headphones },
 ]
 
