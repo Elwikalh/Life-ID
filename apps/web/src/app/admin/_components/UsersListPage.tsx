@@ -8,17 +8,19 @@ export default async function UsersListPage({
   title,
   roles,
   query,
+  basePath,
 }: {
   title: string
   roles: Role[]
   query?: string
+  basePath: string
 }) {
   const rows = await listUsersByRole(roles, query)
   return (
     <div className="space-y-4">
       <PageHeader title={title} count={rows.length} />
       <SearchBox placeholder={"ابحث في " + title + "..."} />
-      <UsersTable rows={rows} />
+      <UsersTable rows={rows} basePath={basePath} />
     </div>
   )
 }
