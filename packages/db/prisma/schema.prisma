@@ -52,6 +52,7 @@ model User {
   medicalId    MedicalId?
   appointments Appointment[] @relation("PatientAppointments")
   provided     Appointment[] @relation("ProviderAppointments")
+  partnerships Partnership[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -100,4 +101,20 @@ model ContactMessage {
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model Partnership {
+  id           String   @id @default(cuid())
+  owner        User     @relation(fields: [ownerId], references: [id])
+  ownerId      String
+  partnerName  String
+  partnerType  String
+  partnerPhone String?
+  discountPct  Int      @default(0)
+  patientPct   Int      @default(0)
+  doctorPct    Int      @default(0)
+  note         String?
+  createdAt    DateTime @default(now())
+
+  @@index([ownerId])
 }
