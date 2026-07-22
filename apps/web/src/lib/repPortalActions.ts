@@ -47,3 +47,70 @@ export async function linkRepAccount(formData: FormData) {
   if (outcome === "error") redirect("/rep?error=server");
   redirect("/rep?linked=1");
 }
+
+export async function logVisit(formData: FormData) {
+  const u = await currentUser();
+  if (!u) redirect("/sign-in");
+
+  const doctorName = String(formData.get("doctorName") ?? "").trim();
+  const specialty = String(formData.get("specialty") ?? "").trim();
+  const region = String(formData.get("region") ?? "").trim();
+  const outcome = String(formData.get("outcome") ?? "").trim();
+  const note = String(formData.get("note") ?? "").trim();
+  const dateStr = String(formData.get("visitDate") ?? "").trim();
+
+  if (!doctorName) redirect("/rep?error=doctor");
+
+  let ok = false;
+  try {
+    const rep = await prisma.medicalRep.findFirst({
+      where: { linkedUserId: u.id },
+      select: { id: true },
+    });
+    if (rep) {
+      const parsed = dateStr ? new Date(dateStr) : new Date();
+      const visitDate = isNaN(parsed.getTime()) ? new Date() : parsed;
+      await prisma.repVisit.create({
+        data: {
+          repId: rep.id,
+          doctorName,
+          specialty: specialty || null,
+          region: region || null,
+          outcome: outcome || null,
+          note: note || null,
+          visitDate,
+        },
+      });
+      ok = true;
+    }
+  } catch {
+    ok = false;
+  }
+
+  revalidatePath("/rep");
+  if (!ok) redirect("/rep?error=visit");
+  redirect("/rep?visit=1");
+}
+
+export async function deleteVisit(formData: FormData) {
+  const u = await currentUser();
+  if (!u) redirect("/sign-in");
+
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) redirect("/rep");
+
+  try {
+    const rep = await prisma.medicalRep.findFirst({
+      where: { linkedUserId: u.id },
+      select: { id: true },
+    });
+    if (rep) {
+      await prisma.repVisit.deleteMany({
+        where: { id, repId: rep.id },
+      });
+    }
+  } catch {}
+
+  revalidatePath("/rep");
+  redirect("/rep?vdeleted=1");
+}
