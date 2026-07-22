@@ -22,7 +22,10 @@ export async function savePrescription(formData: FormData) {
     .map((line) => {
       const idx = line.indexOf(" - ")
       if (idx === -1) return { drug: line, dosage: "" }
-      return { drug: line.slice(0, idx).trim(), dosage: line.slice(idx + 3).trim() }
+      return {
+        drug: line.slice(0, idx).trim(),
+        dosage: line.slice(idx + 3).trim(),
+      }
     })
 
   let ok = false
@@ -30,13 +33,18 @@ export async function savePrescription(formData: FormData) {
     // تأكد إن الحجز تبع مقدم الخدمة الحالي
     const appt = await prisma.appointment.findUnique({
       where: { id: appointmentId },
-      select: { providerId: true },
+      select: { providerId: true, patientId: true },
     })
     if (appt && appt.providerId === u.id) {
       await prisma.prescription.upsert({
         where: { appointmentId },
-        update: { items, doctorId: u.id },
-        create: { appointmentId, doctorId: u.id, items },
+        update: { items, doctorId: u.id, patientId: appt.patientId },
+        create: {
+          appointmentId,
+          doctorId: u.id,
+          patientId: appt.patientId,
+          items,
+        },
       })
       ok = true
     }
