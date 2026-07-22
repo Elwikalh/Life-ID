@@ -5,6 +5,16 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { prisma } from "@life-id/db"
 
+// أنواع المدعوين اللي يتحوّلوا لشركاء عند قبول الدعوة (مقدمو الخدمة).
+// «زميل طبيب» ترشيح فقط بدون عمولة، فمش بيتسجّل كشريك.
+const PARTNER_TYPES = new Set([
+  "pharmacy",
+  "lab",
+  "radiology",
+  "hospital",
+  "pharma_company",
+])
+
 export async function sendInvitation(formData: FormData) {
   const u = await currentUser()
   if (!u) redirect("/sign-in")
@@ -48,17 +58,61 @@ export async function markJoined(formData: FormData) {
   if (!u) redirect("/sign-in")
 
   const id = String(formData.get("id") || "").trim()
-  if (id) {
-    try {
-      await prisma.invitation.updateMany({
-        where: { id, inviterId: u.id },
-        data: { status: "joined" },
-      })
-    } catch {}
+  if (!id) {
+    redirect("/profile/invitations?joined=1")
   }
 
+  let becamePartner = false
+
+  try {
+    // نجيب الدعوة الأول عشان نعرف نوعها وبياناتها
+    const inv = await prisma.invitation.findFirst({
+      where: { id, inviterId: u.id },
+    })
+
+    if (inv && inv.status !== "joined") {
+      // نعلّمها كمُنضم
+      await prisma.invitation.update({
+        where: { id: inv.id },
+        data: { status: "joined" },
+      })
+
+      // لو المدعو مقدم خدمة → نحوّله تلقائياً لشريك
+      if (PARTNER_TYPES.has(inv.inviteeType)) {
+        const existing = await prisma.partnership.findFirst({
+          where: {
+            ownerId: u.id,
+            partnerName: inv.inviteeName,
+            partnerType: inv.inviteeType,
+          },
+        })
+
+        if (!existing) {
+          await prisma.partnership.create({
+            data: {
+              ownerId: u.id,
+              partnerName: inv.inviteeName,
+              partnerType: inv.inviteeType,
+              partnerPhone: inv.contact,
+              discountPct: inv.requestedPct ?? 0,
+              patientPct: 0,
+              doctorPct: 0,
+              note: "أُضيف تلقائياً عند قبول الدعوة",
+            },
+          })
+          becamePartner = true
+        }
+      }
+    }
+  } catch {}
+
   revalidatePath("/profile/invitations")
-  redirect("/profile/invitations?joined=1")
+  revalidatePath("/profile/partnerships")
+  redirect(
+    becamePartner
+      ? "/profile/invitations?joined=1&partner=1"
+      : "/profile/invitations?joined=1",
+  )
 }
 
 export async function deleteInvitation(formData: FormData) {
