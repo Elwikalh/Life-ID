@@ -2,6 +2,7 @@ generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -29,32 +30,43 @@ enum AppointmentStatus {
 }
 
 model User {
-  id            String        @id @default(cuid())
-  role          Role
-  fullName      String
-  email         String?       @unique
-  phone         String?       @unique
-specialty       String?
-bio             String?
-consultationFee Int?
-  medicalId     MedicalId?
-  appointments  Appointment[] @relation("PatientAppointments")
-  provided      Appointment[] @relation("ProviderAppointments")
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id              String   @id @default(cuid())
+  role            Role
+  fullName        String
+  email           String?  @unique
+  phone           String?  @unique
+  specialty       String?
+  bio             String?
+  consultationFee Int?
+
+  // بيانات الخدمة (Edit service)
+  branchesCount   Int?
+  city            String?
+  clinicLocation  String?
+  workingDays     String[] @default([])
+  workFrom        String?
+  workTo          String?
+  homeService     Boolean  @default(false)
+  paymentPolicy   String?
+
+  medicalId    MedicalId?
+  appointments Appointment[] @relation("PatientAppointments")
+  provided     Appointment[] @relation("ProviderAppointments")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 model MedicalId {
-  id                 String   @id @default(cuid())
-  user               User     @relation(fields: [userId], references: [id])
-  userId             String   @unique
-  qrCode             String   @unique
-  bloodType          String?
-  allergies          String[]
-  chronicConditions  String[]
-  medications        String[]
-  emergencyName      String?
-  emergencyPhone     String?
+  id                String   @id @default(cuid())
+  user              User     @relation(fields: [userId], references: [id])
+  userId            String   @unique
+  qrCode            String   @unique
+  bloodType         String?
+  allergies         String[]
+  chronicConditions String[]
+  medications       String[]
+  emergencyName     String?
+  emergencyPhone    String?
 }
 
 model Appointment {
@@ -72,13 +84,14 @@ model Appointment {
 }
 
 model Prescription {
-  id             String      @id @default(cuid())
-  appointment    Appointment @relation(fields: [appointmentId], references: [id])
-  appointmentId  String      @unique
-  doctorId       String
-  items          Json
-  createdAt      DateTime    @default(now())
+  id            String      @id @default(cuid())
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  appointmentId String      @unique
+  doctorId      String
+  items         Json
+  createdAt     DateTime    @default(now())
 }
+
 model ContactMessage {
   id        String   @id @default(cuid())
   name      String
