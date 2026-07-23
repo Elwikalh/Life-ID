@@ -14,6 +14,7 @@ import {
   ClipboardList,
   Calculator,
   Handshake,
+  Star,
 } from "lucide-react"
 import {
   SignedIn,
@@ -47,6 +48,12 @@ export default function SiteHeader() {
       href: "/my-prescriptions",
       label: "روشتاتي",
       icon: ClipboardList,
+      show: isPatient,
+    },
+    {
+      href: "/reviews",
+      label: "تقييماتي",
+      icon: Star,
       show: isPatient,
     },
     {
