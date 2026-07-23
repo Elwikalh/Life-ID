@@ -4,8 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSignIn, useAuth, useClerk } from "@clerk/nextjs"
 
-const PASSWORD = "LifeId#Test2026"
-
 type Role = {
   label: string
   email: string
@@ -111,13 +109,31 @@ export default function DevLoginPage() {
       if (isSignedIn) {
         await signOut()
       }
-      const res = await signIn.create({ identifier: email, password: PASSWORD })
-      if (res.status === "complete" && setActive) {
-        await setActive({ session: res.createdSessionId })
+
+      // 1) اطلب تذكرة دخول من الخادم (تتخطى التحقق بخطوتين)
+      const res = await fetch("/api/dev-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+      const data = (await res.json()) as { token?: string; error?: string }
+      if (!res.ok || !data.token) {
+        setError(data.error ?? "تعذر إنشاء تذكرة الدخول")
+        setBusy(null)
+        return
+      }
+
+      // 2) سجّل الدخول بالتذكرة
+      const result = await signIn.create({
+        strategy: "ticket",
+        ticket: data.token,
+      })
+      if (result.status === "complete" && setActive) {
+        await setActive({ session: result.createdSessionId })
         router.push("/dashboard")
         return
       }
-      setError("لم يكتمل الدخول (" + res.status + ")")
+      setError("لم يكتمل الدخول (" + result.status + ")")
       setBusy(null)
     } catch (e) {
       const msg =
