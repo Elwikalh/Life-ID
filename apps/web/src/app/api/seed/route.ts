@@ -123,30 +123,24 @@ const ACCOUNTS: Acc[] = [
   },
 ]
 
-async function ensureUser(
-  client: Awaited<ReturnType<typeof clerkClient>>,
-  acc: Acc,
-): Promise<string> {
-  const publicMetadata = { role: acc.role, status: "approved" }
-  const list = await client.users.getUserList({ emailAddress: [acc.email] })
-  let id: string
-  if (list.data.length > 0) {
-    const existing = list.data[0]
-    await client.users.updateUser(existing.id, {
-      firstName: acc.name,
-      publicMetadata,
-    })
-    id = existing.id
-  } else {
-    const created = await client.users.createUser({
-      emailAddress: [acc.email],
-      password: PASSWORD,
-      firstName: acc.name,
-      publicMetadata,
-      skipPasswordChecks: true,
-    })
-    id = created.id
+// يستخرج رسالة الخطأ التفصيلية من Clerk
+function clerkErr(e: unknown): string {
+  if (
+    e &&
+    typeof e === "object" &&
+    "errors" in e &&
+    Array.isArray((e as { errors: unknown[] }).errors)
+  ) {
+    const errs = (e as { errors: Array<Record<string, unknown>> }).errors
+    const parts = errs.map((x) =>
+      String(x.longMessage ?? x.message ?? x.code ?? ""),
+    )
+    if (parts.length > 0) return parts.join(" | ")
   }
+  return e instanceof Error ? e.message : String(e)
+}
+
+async function upsertDb(id: string, acc: Acc) {
   const data = {
     role: acc.role as never,
     fullName: acc.name,
@@ -158,7 +152,47 @@ async function ensureUser(
     update: data,
     create: { id, ...data },
   })
-  return id
+}
+
+type EnsureResult = { id: string; withPassword: boolean }
+
+async function ensureUser(
+  client: Awaited<ReturnType<typeof clerkClient>>,
+  acc: Acc,
+): Promise<EnsureResult> {
+  const publicMetadata = { role: acc.role, status: "approved" }
+  const list = await client.users.getUserList({ emailAddress: [acc.email] })
+  if (list.data.length > 0) {
+    const existing = list.data[0]
+    await client.users.updateUser(existing.id, {
+      firstName: acc.name,
+      publicMetadata,
+    })
+    await upsertDb(existing.id, acc)
+    return { id: existing.id, withPassword: true }
+  }
+
+  // محاولة أولى: إنشاء بكلمة مرور
+  try {
+    const created = await client.users.createUser({
+      emailAddress: [acc.email],
+      password: PASSWORD,
+      firstName: acc.name,
+      publicMetadata,
+      skipPasswordChecks: true,
+    })
+    await upsertDb(created.id, acc)
+    return { id: created.id, withPassword: true }
+  } catch (e) {
+    // لو الإنشاء بكلمة المرور اترفض، جرّب من غير كلمة مرور
+    const created = await client.users.createUser({
+      emailAddress: [acc.email],
+      firstName: acc.name,
+      publicMetadata,
+    })
+    await upsertDb(created.id, acc)
+    return { id: created.id, withPassword: false }
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -166,15 +200,65 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 
-  try {
-    const client = await clerkClient()
+  const client = await clerkClient()
 
-    // 1) إنشاء / تحديث كل الحسابات
-    const idMap: Record<string, string> = {}
-    for (const acc of ACCOUNTS) {
-      idMap[acc.key] = await ensureUser(client, acc)
+  // 1) إنشاء / تحديث كل الحسابات (مع تجميع نتيجة كل حساب)
+  const idMap: Record<string, string> = {}
+  const results: Array<{
+    email: string
+    role: string
+    status: string
+    error?: string
+  }> = []
+  let anyNoPassword = false
+
+  for (const acc of ACCOUNTS) {
+    try {
+      const r = await ensureUser(client, acc)
+      idMap[acc.key] = r.id
+      if (!r.withPassword) anyNoPassword = true
+      results.push({
+        email: acc.email,
+        role: acc.role,
+        status: r.withPassword ? "ok" : "ok-no-password",
+      })
+    } catch (e) {
+      results.push({
+        email: acc.email,
+        role: acc.role,
+        status: "failed",
+        error: clerkErr(e),
+      })
     }
+  }
 
+  // لو في حسابات أساسية فشلت، ارجع بالتفاصيل قبل ما نزرع البيانات
+  const requiredKeys = [
+    "doctor",
+    "clinic",
+    "hospital",
+    "pharmacy",
+    "lab",
+    "radiology",
+    "emergency",
+    "pharma",
+    "rep",
+    "patient1",
+    "patient2",
+    "patient3",
+  ]
+  const missing = requiredKeys.filter((k) => !idMap[k])
+  if (missing.length > 0) {
+    return NextResponse.json({
+      ok: false,
+      stage: "accounts",
+      hint: "فشل إنشاء بعض الحسابات. شوف error جنب كل واحد.",
+      missing,
+      results,
+    })
+  }
+
+  try {
     const providerKeys = [
       "doctor",
       "clinic",
@@ -328,13 +412,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      message: "تم إنشاء الحسابات والبيانات التجريبية بنجاح",
+      message: anyNoPassword
+        ? "اتعملت الحسابات لكن بعضها من غير كلمة مرور (الدخول بالباسورد غالبًا غير مفعّل في Clerk)"
+        : "تم إنشاء الحسابات والبيانات التجريبية بنجاح",
+      passwordAuthEnabled: !anyNoPassword,
       password: PASSWORD,
-      accounts: ACCOUNTS.map((a) => ({
-        role: a.role,
-        name: a.name,
-        email: a.email,
-      })),
+      results,
       seeded: {
         appointments: appts.length,
         products: 4,
@@ -345,8 +428,8 @@ export async function GET(req: NextRequest) {
     })
   } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e instanceof Error ? e.message : String(e) },
-      { status: 500 },
+      { ok: false, stage: "data", error: clerkErr(e), results },
+      { status: 200 },
     )
   }
 }
