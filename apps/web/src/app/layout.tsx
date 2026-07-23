@@ -1,22 +1,23 @@
 import type { Metadata } from "next"
 import { ClerkProvider } from "@clerk/nextjs"
-import SiteHeader from "../components/SiteHeader"
-import Breadcrumbs from "../components/Breadcrumbs"
+import AppShell from "../components/AppShell"
 import "./globals.css"
 
 export const metadata: Metadata = {
   title: "Life ID",
-  description: "هوية طبية موحّدة — Life ID"
+  description: "هوية طبية موحّدة — Life ID",
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <ClerkProvider>
       <html lang="ar" dir="rtl">
         <body>
-          <SiteHeader />
-          <Breadcrumbs />
-          {children}
+          <AppShell>{children}</AppShell>
         </body>
       </html>
     </ClerkProvider>
