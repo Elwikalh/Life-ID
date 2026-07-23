@@ -150,18 +150,22 @@ model Partnership {
 }
 
 model Invitation {
-  id           String   @id @default(cuid())
-  inviter      User     @relation(fields: [inviterId], references: [id])
-  inviterId    String
-  inviteeName  String
-  inviteeType  String
-  contact      String?
-  requestedPct Int?
-  message      String?
-  status       String   @default("pending")
-  createdAt    DateTime @default(now())
+  id            String   @id @default(cuid())
+  inviter       User     @relation(fields: [inviterId], references: [id])
+  inviterId     String
+  inviteeName   String
+  inviteeType   String
+  contact       String?
+  requestedPct  Int?
+  message       String?
+  status        String   @default("pending")
+  inviteeUserId String?
+  currentPct    Int?
+  lastActor     String?
+  createdAt     DateTime @default(now())
 
   @@index([inviterId])
+  @@index([inviteeUserId])
 }
 
 model UserPhoto {
