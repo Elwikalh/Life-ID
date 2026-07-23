@@ -102,7 +102,7 @@ export default async function ReviewsPage({
                       {p.providerName}
                     </p>
                     <p className="text-xs text-slate-400">
-                      {ROLE_LABELS[p.role] ?? p.role}
+{ROLE_LABELS[p.role as keyof typeof ROLE_LABELS] ?? p.role}
                     </p>
                   </div>
                   <div className="text-left">
