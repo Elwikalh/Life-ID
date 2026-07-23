@@ -18,6 +18,35 @@ export function PageIntro({
   )
 }
 
+// هيدر احترافي موحّد لكل الأدوار
+export function DashHeader({
+  name,
+  roleLabel,
+  icon: Icon,
+}: {
+  name: string
+  roleLabel: string
+  icon: LucideIcon
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-brand-600 to-brand-500 p-6 text-white shadow-sm">
+      <div className="relative z-10 flex items-center gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+          <Icon className="h-7 w-7" />
+        </div>
+        <div className="min-w-0">
+          <div className="text-sm text-white/80">{roleLabel}</div>
+          <h1 className="font-display truncate text-2xl font-extrabold">
+            أهلاً، {name}
+          </h1>
+        </div>
+      </div>
+      <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+      <div className="pointer-events-none absolute -bottom-12 left-28 h-32 w-32 rounded-full bg-white/5" />
+    </div>
+  )
+}
+
 export function KpiCard({
   icon: Icon,
   label,
