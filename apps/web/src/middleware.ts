@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 
 // المسارات المحمية (لازم تسجيل دخول)
-// ملاحظة: /e/... مفتوحة للجميع (صفحة الطوارئ)
+// ملاحظة: /dev-login مفتوحة للجميع (صفحة الدخول السريع للتجربة)
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
   "/onboarding(.*)",
@@ -14,7 +14,6 @@ const isProtectedRoute = createRouteMatcher([
   "/appointments(.*)",
   "/rx(.*)",
   "/profile(.*)",
-  "/dev(.*)"
 ])
 
 export default clerkMiddleware(async (auth, req) => {
@@ -27,6 +26,6 @@ export const config = {
   matcher: [
     // كل المسارات ماعدا الملفات الاستاتيك والـ _next
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpg|jpeg|gif|png|svg|ico|webp|woff2?|ttf)).*)",
-    "/(api|trpc)(.*)"
-  ]
+    "/(api|trpc)(.*)",
+  ],
 }
