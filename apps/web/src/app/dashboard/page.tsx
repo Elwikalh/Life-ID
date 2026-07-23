@@ -12,7 +12,7 @@ import {
 } from "../../lib/dashboard"
 import { setAppointmentStatus } from "../../lib/appointmentActions"
 import {
-  PageIntro,
+  DashHeader,
   KpiCard,
   SectionCard,
   EmptyState,
@@ -35,6 +35,9 @@ import {
   Building2,
   UserRound,
   ClipboardList,
+  Search,
+  Factory,
+  Briefcase,
 } from "lucide-react"
 
 export const dynamic = "force-dynamic"
@@ -50,6 +53,17 @@ const APPT_ROLES: Role[] = [
   "radiology",
   "emergency",
 ]
+
+// أيقونة الهيدر حسب الدور (توحيد الشكل مع اختلاف الرمز)
+const PROVIDER_ICONS: Partial<Record<Role, typeof Stethoscope>> = {
+  doctor: Stethoscope,
+  clinic: Building2,
+  hospital: Building2,
+  pharmacy: Pill,
+  lab: ClipboardList,
+  radiology: ClipboardList,
+  emergency: Stethoscope,
+}
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "قيد الانتظار",
@@ -86,7 +100,7 @@ function fmtDate(d: Date) {
   })
 }
 
-function ApptAction({
+function AppointmentAction({
   id,
   status,
   label,
@@ -138,15 +152,221 @@ export default async function Dashboard() {
 
   if (meta.role === "pharma_company") return <PharmaDashboard {...props} />
   if (meta.role === "medical_rep") return <RepDashboard {...props} />
-  if (APPT_ROLES.includes(meta.role)) return <ProviderDashboard {...props} />
+  if (APPT_ROLES.includes(meta.role))
+    return <ProviderDashboard {...props} icon={PROVIDER_ICONS[meta.role]} />
   return <PatientDashboard {...props} />
+}
+
+async function ProviderDashboard({
+  userId,
+  name,
+  roleLabel,
+  icon,
+}: DashProps & { icon?: typeof Stethoscope }) {
+  const d = await getProviderData(userId)
+  const HeaderIcon = icon ?? Stethoscope
+  return (
+    <div className="space-y-6">
+      <DashHeader name={name} roleLabel={roleLabel} icon={HeaderIcon} />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          icon={CalendarDays}
+          label="إجمالي الحجوزات"
+          value={fmt(d.totalAppointments)}
+        />
+        <KpiCard icon={Clock} label="الحجوزات القادمة" value={fmt(d.upcoming)} />
+        <KpiCard icon={Users} label="المرضى" value={fmt(d.patientsCount)} />
+        <KpiCard
+          icon={Wallet}
+          label="الإيرادات"
+          value={fmt(d.revenue) + " ج.م"}
+        />
+      </div>
+
+      <SectionCard
+        title="أحدث الحجوزات"
+        actionHref="/appointments"
+        actionLabel="كل الحجوزات"
+      >
+        {d.recent.length === 0 ? (
+          <EmptyState
+            icon={CalendarDays}
+            title="لا توجد حجوزات بعد"
+            hint="هتظهر الحجوزات هنا أول ما يتم حجز موعد"
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-right text-sm">
+              <thead>
+                <tr className="text-xs text-slate-400">
+                  <th className="pb-2 font-medium">المريض</th>
+                  <th className="pb-2 font-medium">القيمة</th>
+                  <th className="pb-2 font-medium">الحالة</th>
+                  <th className="pb-2 font-medium">الموعد</th>
+                  <th className="pb-2 font-medium">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/5">
+                {d.recent.map((a) => (
+                  <tr key={a.id}>
+                    <td className="py-2.5 font-medium text-slate-700">
+                      {a.patientName}
+                    </td>
+                    <td className="py-2.5 text-slate-500">
+                      {fmt(a.priceEGP)} ج.م
+                    </td>
+                    <td className="py-2.5">
+                      <Badge tone={STATUS_TONE[a.status] ?? "neutral"}>
+                        {STATUS_LABELS[a.status] ?? a.status}
+                      </Badge>
+                    </td>
+                    <td className="py-2.5 text-slate-500">
+                      {fmtDate(a.scheduledAt)}
+                    </td>
+                    <td className="py-2.5">
+                      <div className="flex items-center gap-1.5">
+                        {a.status === "pending" && (
+                          <>
+                            <AppointmentAction
+                              id={a.id}
+                              status="confirmed"
+                              label="تأكيد"
+                              variant="primary"
+                            />
+                            <AppointmentAction
+                              id={a.id}
+                              status="cancelled"
+                              label="رفض"
+                              variant="ghost"
+                            />
+                          </>
+                        )}
+                        {a.status === "confirmed" && (
+                          <>
+                            <AppointmentAction
+                              id={a.id}
+                              status="completed"
+                              label="إنهاء"
+                              variant="primary"
+                            />
+                            <Link href={"/rx/" + a.id} className={BTN_RX}>
+                              روشتة
+                            </Link>
+                          </>
+                        )}
+                        {a.status === "completed" && (
+                          <Link href={"/rx/" + a.id} className={BTN_RX}>
+                            روشتة
+                          </Link>
+                        )}
+                        {a.status === "cancelled" && (
+                          <span className="text-slate-300">—</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionCard>
+
+      <QuickActionsRow
+        actions={[
+          { href: "/appointments", icon: CalendarDays, label: "كل الحجوزات" },
+          { href: "/search", icon: Search, label: "بحث" },
+          { href: "/id", icon: QrCode, label: "بطاقتي الطبية" },
+          { href: "/profile/photo", icon: UserRound, label: "ملفي الشخصي" },
+        ]}
+      />
+    </div>
+  )
+}
+
+async function PatientDashboard({ userId, name, roleLabel }: DashProps) {
+  const d = await getPatientData(userId)
+  return (
+    <div className="space-y-6">
+      <DashHeader name={name} roleLabel={roleLabel} icon={UserRound} />
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <KpiCard
+          icon={CalendarDays}
+          label="إجمالي حجوزاتي"
+          value={fmt(d.total)}
+        />
+        <KpiCard icon={Clock} label="الحجوزات القادمة" value={fmt(d.upcoming)} />
+        <KpiCard
+          icon={Stethoscope}
+          label="مقدمو الخدمة"
+          value={fmt(d.providersCount)}
+        />
+      </div>
+
+      <SectionCard
+        title="أحدث حجوزاتي"
+        actionHref="/appointments"
+        actionLabel="كل الحجوزات"
+      >
+        {d.recent.length === 0 ? (
+          <EmptyState
+            icon={CalendarDays}
+            title="لا توجد حجوزات بعد"
+            hint="ابحث عن طبيب أو مقدم خدمة واحجز موعدك الأول"
+            ctaHref="/search"
+            ctaLabel="ابحث الآن"
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-right text-sm">
+              <thead>
+                <tr className="text-xs text-slate-400">
+                  <th className="pb-2 font-medium">مقدم الخدمة</th>
+                  <th className="pb-2 font-medium">الحالة</th>
+                  <th className="pb-2 font-medium">الموعد</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/5">
+                {d.recent.map((a) => (
+                  <tr key={a.id}>
+                    <td className="py-2.5 font-medium text-slate-700">
+                      {a.providerName}
+                    </td>
+                    <td className="py-2.5">
+                      <Badge tone={STATUS_TONE[a.status] ?? "neutral"}>
+                        {STATUS_LABELS[a.status] ?? a.status}
+                      </Badge>
+                    </td>
+                    <td className="py-2.5 text-slate-500">
+                      {fmtDate(a.scheduledAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionCard>
+
+      <QuickActionsRow
+        actions={[
+          { href: "/search", icon: Search, label: "ابحث عن طبيب" },
+          { href: "/appointments", icon: CalendarDays, label: "حجوزاتي" },
+          { href: "/id", icon: QrCode, label: "بطاقتي الطبية" },
+          { href: "/profile/photo", icon: UserRound, label: "ملفي الشخصي" },
+        ]}
+      />
+    </div>
+  )
 }
 
 async function PharmaDashboard({ userId, name, roleLabel }: DashProps) {
   const d = await getPharmaData(userId)
   return (
     <div className="space-y-6">
-      <PageIntro title={"أهلًا، " + name} subtitle={"لوحة تحكم " + roleLabel} />
+      <DashHeader name={name} roleLabel={roleLabel} icon={Factory} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
@@ -161,11 +381,7 @@ async function PharmaDashboard({ userId, name, roleLabel }: DashProps) {
           value={fmt(d.repsCount)}
           href="/profile/reps"
         />
-        <KpiCard
-          icon={MapPin}
-          label="زيارات المندوبين"
-          value={fmt(d.visitsCount)}
-        />
+        <KpiCard icon={MapPin} label="زيارات المندوبين" value={fmt(d.visitsCount)} />
         <KpiCard
           icon={Handshake}
           label="الشراكات"
@@ -183,7 +399,7 @@ async function PharmaDashboard({ userId, name, roleLabel }: DashProps) {
           {d.recentProducts.length === 0 ? (
             <EmptyState
               icon={Pill}
-              title="لسه مضفتش منتجات"
+              title="لسه مفيش منتجات"
               hint="أضف أول منتج لشركتك يظهر هنا"
               ctaHref="/profile/products"
               ctaLabel="أضف منتج"
@@ -273,9 +489,7 @@ async function PharmaDashboard({ userId, name, roleLabel }: DashProps) {
                       {v.doctorName}
                     </td>
                     <td className="py-2.5 text-slate-500">{v.region ?? "—"}</td>
-                    <td className="py-2.5 text-slate-500">
-                      {v.outcome ?? "—"}
-                    </td>
+                    <td className="py-2.5 text-slate-500">{v.outcome ?? "—"}</td>
                     <td className="py-2.5 text-slate-500">
                       {fmtDate(v.visitDate)}
                     </td>
@@ -287,29 +501,14 @@ async function PharmaDashboard({ userId, name, roleLabel }: DashProps) {
         )}
       </SectionCard>
 
-      <div>
-        <h2 className="mb-3 font-display font-bold text-slate-800">
-          إجراءات سريعة
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <QuickAction href="/profile/products" icon={Plus} label="أضف منتج" />
-          <QuickAction
-            href="/profile/reps"
-            icon={UserRound}
-            label="أضف مندوب"
-          />
-          <QuickAction
-            href="/profile/invitations"
-            icon={Mail}
-            label="الدعوات"
-          />
-          <QuickAction
-            href="/profile/partnerships"
-            icon={Handshake}
-            label="الشراكات"
-          />
-        </div>
-      </div>
+      <QuickActionsRow
+        actions={[
+          { href: "/profile/products", icon: Plus, label: "أضف منتج" },
+          { href: "/profile/reps", icon: UserRound, label: "أضف مندوب" },
+          { href: "/profile/invitations", icon: Mail, label: "الدعوات" },
+          { href: "/profile/partnerships", icon: Handshake, label: "الشراكات" },
+        ]}
+      />
     </div>
   )
 }
@@ -318,7 +517,8 @@ async function RepDashboard({ userId, name, roleLabel }: DashProps) {
   const d = await getRepSelfData(userId)
   return (
     <div className="space-y-6">
-      <PageIntro title={"أهلًا، " + name} subtitle={"لوحة تحكم " + roleLabel} />
+      <DashHeader name={name} roleLabel={roleLabel} icon={Briefcase} />
+
       {!d.linked ? (
         <SectionCard title="اربط حسابك بشركتك">
           <EmptyState
@@ -345,6 +545,7 @@ async function RepDashboard({ userId, name, roleLabel }: DashProps) {
               href="/rep"
             />
           </div>
+
           <SectionCard
             title="أحدث زياراتي"
             actionHref="/rep"
@@ -397,206 +598,26 @@ async function RepDashboard({ userId, name, roleLabel }: DashProps) {
   )
 }
 
-async function ProviderDashboard({ userId, name, roleLabel }: DashProps) {
-  const d = await getProviderData(userId)
+function QuickActionsRow({
+  actions,
+}: {
+  actions: { href: string; icon: typeof Stethoscope; label: string }[]
+}) {
   return (
-    <div className="space-y-6">
-      <PageIntro title={"أهلًا، " + name} subtitle={"لوحة تحكم " + roleLabel} />
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          icon={CalendarDays}
-          label="إجمالي الحجوزات"
-          value={fmt(d.totalAppointments)}
-        />
-        <KpiCard
-          icon={Clock}
-          label="الحجوزات القادمة"
-          value={fmt(d.upcoming)}
-        />
-        <KpiCard icon={Users} label="المرضى" value={fmt(d.patientsCount)} />
-        <KpiCard
-          icon={Wallet}
-          label="الإيرادات"
-          value={fmt(d.revenue) + " ج.م"}
-        />
-      </div>
-
-      <SectionCard title="أحدث الحجوزات">
-        {d.recent.length === 0 ? (
-          <EmptyState
-            icon={CalendarDays}
-            title="لا توجد حجوزات بعد"
-            hint="هتظهر الحجوزات هنا أول ما يتم حجز مواعيد"
+    <div>
+      <h2 className="mb-3 font-display font-bold text-slate-800">
+        إجراءات سريعة
+      </h2>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {actions.map((a) => (
+          <QuickAction
+            key={a.href}
+            href={a.href}
+            icon={a.icon}
+            label={a.label}
           />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-right text-sm">
-              <thead>
-                <tr className="text-xs text-slate-400">
-                  <th className="pb-2 font-medium">المريض</th>
-                  <th className="pb-2 font-medium">القيمة</th>
-                  <th className="pb-2 font-medium">الحالة</th>
-                  <th className="pb-2 font-medium">الموعد</th>
-                  <th className="pb-2 font-medium">الإجراءات</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-black/5">
-                {d.recent.map((a) => (
-                  <tr key={a.id}>
-                    <td className="py-2.5 font-medium text-slate-700">
-                      {a.patientName}
-                    </td>
-                    <td className="py-2.5 text-slate-500">{fmt(a.priceEGP)}</td>
-                    <td className="py-2.5">
-                      <Badge tone={STATUS_TONE[a.status] ?? "neutral"}>
-                        {STATUS_LABELS[a.status] ?? a.status}
-                      </Badge>
-                    </td>
-                    <td className="py-2.5 text-slate-500">
-                      {fmtDate(a.scheduledAt)}
-                    </td>
-                    <td className="py-2.5">
-                      <div className="flex flex-wrap gap-1.5">
-                        {a.status === "pending" && (
-                          <>
-                            <ApptAction
-                              id={a.id}
-                              status="confirmed"
-                              label="تأكيد"
-                              variant="primary"
-                            />
-                            <ApptAction
-                              id={a.id}
-                              status="cancelled"
-                              label="رفض"
-                              variant="ghost"
-                            />
-                          </>
-                        )}
-                        {a.status === "confirmed" && (
-                          <>
-                            <ApptAction
-                              id={a.id}
-                              status="completed"
-                              label="إنهاء"
-                              variant="primary"
-                            />
-                            <Link href={"/rx/" + a.id} className={BTN_RX}>
-                              روشتة
-                            </Link>
-                          </>
-                        )}
-                        {a.status === "completed" && (
-                          <Link href={"/rx/" + a.id} className={BTN_RX}>
-                            روشتة
-                          </Link>
-                        )}
-                        {a.status === "cancelled" && (
-                          <span className="text-xs text-slate-400">—</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </SectionCard>
-    </div>
-  )
-}
-
-async function PatientDashboard({ userId, name, roleLabel }: DashProps) {
-  const d = await getPatientData(userId)
-  return (
-    <div className="space-y-6">
-      <PageIntro title={"أهلًا، " + name} subtitle={"لوحة تحكم " + roleLabel} />
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <KpiCard
-          icon={CalendarDays}
-          label="حجوزاتي"
-          value={fmt(d.total)}
-          href="/appointments"
-        />
-        <KpiCard icon={Clock} label="القادمة" value={fmt(d.upcoming)} />
-        <KpiCard
-          icon={Stethoscope}
-          label="مقدمو الخدمة"
-          value={fmt(d.providersCount)}
-          href="/search"
-        />
+        ))}
       </div>
-
-      <SectionCard
-        title="بطاقتي الطبية"
-        actionHref="/id"
-        actionLabel="عرض البطاقة"
-      >
-        <Link
-          href="/id"
-          className="flex items-center gap-4 rounded-xl border border-brand-100 bg-brand-50/40 p-4 hover:bg-brand-50"
-        >
-          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm">
-            <QrCode className="h-6 w-6" />
-          </span>
-          <div>
-            <div className="font-medium text-slate-700">
-              اعرض هويتك الطبية وكود الطوارئ
-            </div>
-            <div className="text-sm text-slate-400">
-              QR للوصول السريع لبياناتك وقت الطوارئ
-            </div>
-          </div>
-        </Link>
-      </SectionCard>
-
-      <SectionCard
-        title="حجوزاتي الأخيرة"
-        actionHref="/appointments"
-        actionLabel="كل الحجوزات"
-      >
-        {d.recent.length === 0 ? (
-          <EmptyState
-            icon={CalendarDays}
-            title="لا توجد حجوزات بعد"
-            hint="ابحث عن مقدم خدمة واحجز موعدك الأول"
-            ctaHref="/search"
-            ctaLabel="ابحث الآن"
-          />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-right text-sm">
-              <thead>
-                <tr className="text-xs text-slate-400">
-                  <th className="pb-2 font-medium">مقدم الخدمة</th>
-                  <th className="pb-2 font-medium">الحالة</th>
-                  <th className="pb-2 font-medium">الموعد</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-black/5">
-                {d.recent.map((a) => (
-                  <tr key={a.id}>
-                    <td className="py-2.5 font-medium text-slate-700">
-                      {a.providerName}
-                    </td>
-                    <td className="py-2.5">
-                      <Badge tone={STATUS_TONE[a.status] ?? "neutral"}>
-                        {STATUS_LABELS[a.status] ?? a.status}
-                      </Badge>
-                    </td>
-                    <td className="py-2.5 text-slate-500">
-                      {fmtDate(a.scheduledAt)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </SectionCard>
     </div>
   )
 }
