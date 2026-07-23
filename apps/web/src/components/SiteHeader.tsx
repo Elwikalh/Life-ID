@@ -13,6 +13,7 @@ import {
   Inbox,
   ClipboardList,
   Calculator,
+  Handshake,
 } from "lucide-react"
 import {
   SignedIn,
@@ -59,6 +60,12 @@ export default function SiteHeader() {
       label: "روشتات واردة",
       icon: Inbox,
       show: role === "pharmacy",
+    },
+    {
+      href: "/negotiations",
+      label: "التفاوض",
+      icon: Handshake,
+      show: !!role && !isPatient,
     },
     {
       href: "/profile/commissions",
