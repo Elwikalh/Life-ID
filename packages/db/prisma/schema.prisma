@@ -232,3 +232,15 @@ model PharmacyLink {
   @@unique([doctorId, pharmacyId])
   @@index([doctorId])
 }
+model Review {
+  id          String   @id @default(cuid())
+  providerId  String
+  patientId   String
+  patientName String?
+  rating      Int
+  comment     String?
+  createdAt   DateTime @default(now())
+
+  @@unique([providerId, patientId])
+  @@index([providerId])
+}
