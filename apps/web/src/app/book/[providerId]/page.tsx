@@ -5,6 +5,7 @@ import { prisma } from "@life-id/db"
 import type { Role } from "@life-id/types"
 import { getProvider, CONSULTATION_FEE } from "../../../lib/providers"
 import { ROLE_LABELS } from "../../../lib/roles"
+import { getProviderRating, getProviderReviews } from "../../../lib/reviews"
 import {
   ArrowRight,
   CalendarPlus,
@@ -13,6 +14,7 @@ import {
   Wallet,
   Clock,
   Home,
+  Star,
 } from "lucide-react"
 
 export const dynamic = "force-dynamic"
@@ -39,6 +41,9 @@ export default async function BookPage({
   const { error } = await searchParams
   const provider = await getProvider(providerId)
   if (!provider) notFound()
+
+  const rating = await getProviderRating(providerId)
+  const reviews = await getProviderReviews(providerId)
 
   const fee = provider.consultationFee ?? CONSULTATION_FEE
 
@@ -177,6 +182,53 @@ export default async function BookPage({
           <span className="text-lg font-bold text-brand-700">{fee} ج.م</span>
         </div>
       </div>
+
+      <section className="mt-4 rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <Star className="h-4 w-4 text-amber-400" />
+            التقييمات
+          </h2>
+          {rating.count > 0 && (
+            <span className="text-sm font-medium text-slate-500">
+              {rating.avg} من ٥ ({rating.count})
+            </span>
+          )}
+        </div>
+        {reviews.length === 0 ? (
+          <p className="mt-3 text-sm text-slate-400">
+            لا توجد تقييمات بعد. كن أول من يقيّم بعد زيارتك.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-3">
+            {reviews.map((rv) => (
+              <li key={rv.id} className="rounded-xl bg-slate-50 p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-slate-700">
+                    {rv.patientName ?? "مريض"}
+                  </span>
+                  <span className="inline-flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Star
+                        key={i}
+                        className={
+                          "h-3.5 w-3.5 " +
+                          (i <= rv.rating
+                            ? "fill-amber-400 text-amber-400"
+                            : "text-slate-300")
+                        }
+                      />
+                    ))}
+                  </span>
+                </div>
+                {rv.comment && (
+                  <p className="mt-1 text-slate-500">{rv.comment}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {error && ERRORS[error] && (
         <p className="mt-4 rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm font-medium text-danger">
