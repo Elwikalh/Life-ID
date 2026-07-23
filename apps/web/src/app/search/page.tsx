@@ -2,7 +2,8 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { currentUser } from "@clerk/nextjs/server"
 import { searchProviders, PROVIDER_ROLES } from "../../lib/providers"
-import { ROLE_LABELS } from "../../lib/roles"
+import { ROLE_LABELS, t } from "../../lib/i18n"
+import { getLang } from "../../lib/serverLang"
 import { Search, CalendarPlus } from "lucide-react"
 
 export const dynamic = "force-dynamic"
@@ -15,29 +16,46 @@ export default async function SearchPage({
   const user = await currentUser()
   if (!user) redirect("/sign-in")
 
+  const viewerRole = (user.publicMetadata as { role?: string } | undefined)
+    ?.role
+  const lang = await getLang(viewerRole)
+
   const sp = await searchParams
   const q = sp?.q ?? ""
   const role = sp?.role ?? ""
   const providers = await searchProviders(q, role)
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
-      <h1 className="font-display text-2xl font-extrabold">ابحث واحجز</h1>
-      <p className="text-sm text-slate-500">اختر مقدم الخدمة واحجز موعدك بسهولة.</p>
+    <div className="mx-auto max-w-3xl">
+      <h1 className="font-display text-2xl font-extrabold">
+        {t({ ar: "ابحث واحجز", en: "Find & Book" }, lang)}
+      </h1>
+      <p className="text-sm text-slate-500">
+        {t(
+          {
+            ar: "اختر مقدم الخدمة واحجز موعدك بسهولة.",
+            en: "Choose a provider and book your appointment easily.",
+          },
+          lang,
+        )}
+      </p>
 
       <form className="mt-6 flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             name="q"
             defaultValue={q}
-            placeholder="ابحث بالاسم..."
-            className="w-full rounded-xl border border-black/10 py-2.5 pr-9 pl-3 text-sm outline-none focus:border-brand-500"
+            placeholder={t(
+              { ar: "ابحث بالاسم...", en: "Search by name..." },
+              lang,
+            )}
+            className="w-full rounded-xl border border-black/10 py-2.5 pe-9 ps-3 text-sm outline-none focus:border-brand-500"
           />
         </div>
         {role ? <input type="hidden" name="role" value={role} /> : null}
         <button className="rounded-xl bg-brand-500 px-5 text-sm font-semibold text-white hover:bg-brand-600">
-          بحث
+          {t({ ar: "بحث", en: "Search" }, lang)}
         </button>
       </form>
 
@@ -51,7 +69,7 @@ export default async function SearchPage({
               : "border border-black/10 text-slate-600 hover:bg-slate-50")
           }
         >
-          الكل
+          {t({ ar: "الكل", en: "All" }, lang)}
         </Link>
         {PROVIDER_ROLES.map((r) => (
           <Link
@@ -64,7 +82,7 @@ export default async function SearchPage({
                 : "border border-black/10 text-slate-600 hover:bg-slate-50")
             }
           >
-            {ROLE_LABELS[r]}
+            {ROLE_LABELS[r] ? t(ROLE_LABELS[r], lang) : r}
           </Link>
         ))}
       </div>
@@ -72,7 +90,13 @@ export default async function SearchPage({
       <div className="mt-6 space-y-3">
         {providers.length === 0 && (
           <div className="rounded-2xl border border-black/5 bg-white p-10 text-center text-slate-400 shadow-sm">
-            لا يوجد مقدمو خدمة مطابقون. جرّب بحثًا آخر.
+            {t(
+              {
+                ar: "لا يوجد مقدمو خدمة مطابقون. جرّب بحثًا آخر.",
+                en: "No matching providers. Try another search.",
+              },
+              lang,
+            )}
           </div>
         )}
         {providers.map((p) => (
@@ -86,18 +110,21 @@ export default async function SearchPage({
               </div>
               <div>
                 <div className="font-semibold text-slate-800">{p.fullName}</div>
-                <div className="text-xs text-slate-400">{ROLE_LABELS[p.role]}</div>
+                <div className="text-xs text-slate-400">
+                  {ROLE_LABELS[p.role] ? t(ROLE_LABELS[p.role], lang) : p.role}
+                </div>
               </div>
             </div>
             <Link
               href={"/book/" + p.id}
               className="inline-flex items-center gap-1.5 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
             >
-              <CalendarPlus className="h-4 w-4" /> احجز
+              <CalendarPlus className="h-4 w-4" />
+              {t({ ar: "احجز", en: "Book" }, lang)}
             </Link>
           </div>
         ))}
       </div>
-    </main>
+    </div>
   )
 }
