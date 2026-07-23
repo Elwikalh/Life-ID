@@ -2,7 +2,6 @@ import { currentUser } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import type { Role } from "@life-id/types"
-import { ROLE_LABELS } from "../../lib/roles"
 import { prisma } from "@life-id/db"
 import {
   getProviderData,
@@ -12,13 +11,15 @@ import {
 } from "../../lib/dashboard"
 import { setAppointmentStatus } from "../../lib/appointmentActions"
 import {
-  DashHeader,
   KpiCard,
   SectionCard,
   EmptyState,
   QuickAction,
   Badge,
 } from "../../components/dash"
+import { t, ROLE_LABELS } from "../../lib/i18n"
+import type { Lang } from "../../lib/i18n"
+import { getLang } from "../../lib/serverLang"
 import {
   CalendarDays,
   Clock,
@@ -42,7 +43,12 @@ import {
 
 export const dynamic = "force-dynamic"
 
-type DashProps = { userId: string; name: string; roleLabel: string }
+type DashProps = {
+  userId: string
+  name: string
+  roleLabel: string
+  lang: Lang
+}
 
 const APPT_ROLES: Role[] = [
   "doctor",
@@ -54,7 +60,7 @@ const APPT_ROLES: Role[] = [
   "emergency",
 ]
 
-// أيقونة الهيدر حسب الدور (توحيد الشكل مع اختلاف الرمز)
+// Header icon per role (same shape, different symbol)
 const PROVIDER_ICONS: Partial<Record<Role, typeof Stethoscope>> = {
   doctor: Stethoscope,
   clinic: Building2,
@@ -65,11 +71,11 @@ const PROVIDER_ICONS: Partial<Record<Role, typeof Stethoscope>> = {
   emergency: Stethoscope,
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: "قيد الانتظار",
-  confirmed: "مؤكد",
-  completed: "مكتمل",
-  cancelled: "ملغي",
+const STATUS_LABELS: Record<string, { ar: string; en: string }> = {
+  pending: { ar: "قيد الانتظار", en: "Pending" },
+  confirmed: { ar: "مؤكد", en: "Confirmed" },
+  completed: { ar: "مكتمل", en: "Completed" },
+  cancelled: { ar: "ملغي", en: "Cancelled" },
 }
 
 const STATUS_TONE: Record<string, "amber" | "sky" | "brand" | "neutral"> = {
@@ -98,6 +104,37 @@ function fmtDate(d: Date) {
     hour: "2-digit",
     minute: "2-digit",
   })
+}
+
+// Bilingual dashboard header (gradient hero)
+function DashHeader({
+  name,
+  roleLabel,
+  icon: Icon,
+  lang,
+}: {
+  name: string
+  roleLabel: string
+  icon: typeof Stethoscope
+  lang: Lang
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-l from-brand-600 to-brand-500 p-6 text-white shadow-sm">
+      <div className="relative z-10 flex items-center gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+          <Icon className="h-7 w-7" />
+        </div>
+        <div className="min-w-0">
+          <div className="text-sm text-white/80">{roleLabel}</div>
+          <h1 className="font-display truncate text-2xl font-extrabold">
+            {t({ ar: "أهلاً،", en: "Welcome," }, lang)} {name}
+          </h1>
+        </div>
+      </div>
+      <div className="pointer-events-none absolute -start-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+      <div className="pointer-events-none absolute -bottom-12 start-28 h-32 w-32 rounded-full bg-white/5" />
+    </div>
+  )
 }
 
 function AppointmentAction({
@@ -133,11 +170,12 @@ export default async function Dashboard() {
   if (meta.status !== "approved") redirect("/pending")
   if (meta.role === "super_admin") redirect("/admin")
 
+  const lang: Lang = await getLang(meta.role)
   const email = user.emailAddresses?.[0]?.emailAddress ?? null
   const fullName =
     [user.firstName, user.lastName].filter(Boolean).join(" ") ||
     email ||
-    "مستخدم"
+    t({ ar: "مستخدم", en: "User" }, lang)
 
   try {
     await prisma.user.upsert({
@@ -147,8 +185,13 @@ export default async function Dashboard() {
     })
   } catch {}
 
-  const roleLabel = ROLE_LABELS[meta.role]
-  const props: DashProps = { userId: user.id, name: fullName, roleLabel }
+  const roleLabel = t(ROLE_LABELS[meta.role], lang)
+  const props: DashProps = {
+    userId: user.id,
+    name: fullName,
+    roleLabel,
+    lang,
+  }
 
   if (meta.role === "pharma_company") return <PharmaDashboard {...props} />
   if (meta.role === "medical_rep") return <RepDashboard {...props} />
@@ -161,50 +204,83 @@ async function ProviderDashboard({
   userId,
   name,
   roleLabel,
+  lang,
   icon,
 }: DashProps & { icon?: typeof Stethoscope }) {
   const d = await getProviderData(userId)
   const HeaderIcon = icon ?? Stethoscope
   return (
     <div className="space-y-6">
-      <DashHeader name={name} roleLabel={roleLabel} icon={HeaderIcon} />
+      <DashHeader
+        name={name}
+        roleLabel={roleLabel}
+        icon={HeaderIcon}
+        lang={lang}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           icon={CalendarDays}
-          label="إجمالي الحجوزات"
+          label={t({ ar: "إجمالي الحجوزات", en: "Total appointments" }, lang)}
           value={fmt(d.totalAppointments)}
         />
-        <KpiCard icon={Clock} label="الحجوزات القادمة" value={fmt(d.upcoming)} />
-        <KpiCard icon={Users} label="المرضى" value={fmt(d.patientsCount)} />
+        <KpiCard
+          icon={Clock}
+          label={t({ ar: "الحجوزات القادمة", en: "Upcoming" }, lang)}
+          value={fmt(d.upcoming)}
+        />
+        <KpiCard
+          icon={Users}
+          label={t({ ar: "المرضى", en: "Patients" }, lang)}
+          value={fmt(d.patientsCount)}
+        />
         <KpiCard
           icon={Wallet}
-          label="الإيرادات"
-          value={fmt(d.revenue) + " ج.م"}
+          label={t({ ar: "الإيرادات", en: "Revenue" }, lang)}
+          value={fmt(d.revenue) + t({ ar: " ج.م", en: " EGP" }, lang)}
         />
       </div>
 
       <SectionCard
-        title="أحدث الحجوزات"
+        title={t({ ar: "أحدث الحجوزات", en: "Recent appointments" }, lang)}
         actionHref="/appointments"
-        actionLabel="كل الحجوزات"
+        actionLabel={t({ ar: "كل الحجوزات", en: "All appointments" }, lang)}
       >
         {d.recent.length === 0 ? (
           <EmptyState
             icon={CalendarDays}
-            title="لا توجد حجوزات بعد"
-            hint="هتظهر الحجوزات هنا أول ما يتم حجز موعد"
+            title={t(
+              { ar: "لا توجد حجوزات بعد", en: "No appointments yet" },
+              lang,
+            )}
+            hint={t(
+              {
+                ar: "هتظهر الحجوزات هنا أول ما يتم حجز موعد",
+                en: "Appointments will appear here once one is booked",
+              },
+              lang,
+            )}
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-right text-sm">
+            <table className="w-full text-start text-sm">
               <thead>
                 <tr className="text-xs text-slate-400">
-                  <th className="pb-2 font-medium">المريض</th>
-                  <th className="pb-2 font-medium">القيمة</th>
-                  <th className="pb-2 font-medium">الحالة</th>
-                  <th className="pb-2 font-medium">الموعد</th>
-                  <th className="pb-2 font-medium">الإجراءات</th>
+                  <th className="pb-2 font-medium">
+                    {t({ ar: "المريض", en: "Patient" }, lang)}
+                  </th>
+                  <th className="pb-2 font-medium">
+                    {t({ ar: "القيمة", en: "Amount" }, lang)}
+                  </th>
+                  <th className="pb-2 font-medium">
+                    {t({ ar: "الحالة", en: "Status" }, lang)}
+                  </th>
+                  <th className="pb-2 font-medium">
+                    {t({ ar: "الموعد", en: "Date" }, lang)}
+                  </th>
+                  <th className="pb-2 font-medium">
+                    {t({ ar: "الإجراءات", en: "Actions" }, lang)}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5">
@@ -214,11 +290,14 @@ async function ProviderDashboard({
                       {a.patientName}
                     </td>
                     <td className="py-2.5 text-slate-500">
-                      {fmt(a.priceEGP)} ج.م
+                      {fmt(a.priceEGP)}
+                      {t({ ar: " ج.م", en: " EGP" }, lang)}
                     </td>
                     <td className="py-2.5">
                       <Badge tone={STATUS_TONE[a.status] ?? "neutral"}>
-                        {STATUS_LABELS[a.status] ?? a.status}
+                        {STATUS_LABELS[a.status]
+                          ? t(STATUS_LABELS[a.status], lang)
+                          : a.status}
                       </Badge>
                     </td>
                     <td className="py-2.5 text-slate-500">
@@ -231,13 +310,13 @@ async function ProviderDashboard({
                             <AppointmentAction
                               id={a.id}
                               status="confirmed"
-                              label="تأكيد"
+                              label={t({ ar: "تأكيد", en: "Confirm" }, lang)}
                               variant="primary"
                             />
                             <AppointmentAction
                               id={a.id}
                               status="cancelled"
-                              label="رفض"
+                              label={t({ ar: "رفض", en: "Decline" }, lang)}
                               variant="ghost"
                             />
                           </>
@@ -247,17 +326,17 @@ async function ProviderDashboard({
                             <AppointmentAction
                               id={a.id}
                               status="completed"
-                              label="إنهاء"
+                              label={t({ ar: "إنهاء", en: "Complete" }, lang)}
                               variant="primary"
                             />
                             <Link href={"/rx/" + a.id} className={BTN_RX}>
-                              روشتة
+                              {t({ ar: "روشتة", en: "Prescription" }, lang)}
                             </Link>
                           </>
                         )}
                         {a.status === "completed" && (
                           <Link href={"/rx/" + a.id} className={BTN_RX}>
-                            روشتة
+                            {t({ ar: "روشتة", en: "Prescription" }, lang)}
                           </Link>
                         )}
                         {a.status === "cancelled" && (
@@ -274,58 +353,99 @@ async function ProviderDashboard({
       </SectionCard>
 
       <QuickActionsRow
+        lang={lang}
         actions={[
-          { href: "/appointments", icon: CalendarDays, label: "كل الحجوزات" },
-          { href: "/search", icon: Search, label: "بحث" },
-          { href: "/id", icon: QrCode, label: "بطاقتي الطبية" },
-          { href: "/profile/photo", icon: UserRound, label: "ملفي الشخصي" },
+          {
+            href: "/appointments",
+            icon: CalendarDays,
+            label: t({ ar: "كل الحجوزات", en: "All appointments" }, lang),
+          },
+          {
+            href: "/search",
+            icon: Search,
+            label: t({ ar: "بحث", en: "Search" }, lang),
+          },
+          {
+            href: "/id",
+            icon: QrCode,
+            label: t({ ar: "بطاقتي الطبية", en: "My medical ID" }, lang),
+          },
+          {
+            href: "/profile/photo",
+            icon: UserRound,
+            label: t({ ar: "ملفي الشخصي", en: "My profile" }, lang),
+          },
         ]}
       />
     </div>
   )
 }
 
-async function PatientDashboard({ userId, name, roleLabel }: DashProps) {
+async function PatientDashboard({ userId, name, roleLabel, lang }: DashProps) {
   const d = await getPatientData(userId)
   return (
     <div className="space-y-6">
-      <DashHeader name={name} roleLabel={roleLabel} icon={UserRound} />
+      <DashHeader
+        name={name}
+        roleLabel={roleLabel}
+        icon={UserRound}
+        lang={lang}
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <KpiCard
           icon={CalendarDays}
-          label="إجمالي حجوزاتي"
+          label={t({ ar: "إجمالي حجوزاتي", en: "My appointments" }, lang)}
           value={fmt(d.total)}
         />
-        <KpiCard icon={Clock} label="الحجوزات القادمة" value={fmt(d.upcoming)} />
+        <KpiCard
+          icon={Clock}
+          label={t({ ar: "الحجوزات القادمة", en: "Upcoming" }, lang)}
+          value={fmt(d.upcoming)}
+        />
         <KpiCard
           icon={Stethoscope}
-          label="مقدمو الخدمة"
+          label={t({ ar: "مقدمو الخدمة", en: "Providers" }, lang)}
           value={fmt(d.providersCount)}
         />
       </div>
 
       <SectionCard
-        title="أحدث حجوزاتي"
+        title={t({ ar: "أحدث حجوزاتي", en: "My recent appointments" }, lang)}
         actionHref="/appointments"
-        actionLabel="كل الحجوزات"
+        actionLabel={t({ ar: "كل الحجوزات", en: "All appointments" }, lang)}
       >
         {d.recent.length === 0 ? (
           <EmptyState
             icon={CalendarDays}
-            title="لا توجد حجوزات بعد"
-            hint="ابحث عن طبيب أو مقدم خدمة واحجز موعدك الأول"
+            title={t(
+              { ar: "لا توجد حجوزات بعد", en: "No appointments yet" },
+              lang,
+            )}
+            hint={t(
+              {
+                ar: "ابحث عن طبيب أو مقدم خدمة واحجز موعدك الأول",
+                en: "Search for a doctor or provider and book your first appointment",
+              },
+              lang,
+            )}
             ctaHref="/search"
-            ctaLabel="ابحث الآن"
+            ctaLabel={t({ ar: "ابحث الآن", en: "Search now" }, lang)}
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-right text-sm">
+            <table className="w-full text-start text-sm">
               <thead>
                 <tr className="text-xs text-slate-400">
-                  <th className="pb-2 font-medium">مقدم الخدمة</th>
-                  <th className="pb-2 font-medium">الحالة</th>
-                  <th className="pb-2 font-medium">الموعد</th>
+                  <th className="pb-2 font-medium">
+                    {t({ ar: "مقدم الخدمة", en: "Provider" }, lang)}
+                  </th>
+                  <th className="pb-2 font-medium">
+                    {t({ ar: "الحالة", en: "Status" }, lang)}
+                  </th>
+                  <th className="pb-2 font-medium">
+                    {t({ ar: "الموعد", en: "Date" }, lang)}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5">
@@ -336,7 +456,9 @@ async function PatientDashboard({ userId, name, roleLabel }: DashProps) {
                     </td>
                     <td className="py-2.5">
                       <Badge tone={STATUS_TONE[a.status] ?? "neutral"}>
-                        {STATUS_LABELS[a.status] ?? a.status}
+                        {STATUS_LABELS[a.status]
+                          ? t(STATUS_LABELS[a.status], lang)
+                          : a.status}
                       </Badge>
                     </td>
                     <td className="py-2.5 text-slate-500">
@@ -351,40 +473,66 @@ async function PatientDashboard({ userId, name, roleLabel }: DashProps) {
       </SectionCard>
 
       <QuickActionsRow
+        lang={lang}
         actions={[
-          { href: "/search", icon: Search, label: "ابحث عن طبيب" },
-          { href: "/appointments", icon: CalendarDays, label: "حجوزاتي" },
-          { href: "/id", icon: QrCode, label: "بطاقتي الطبية" },
-          { href: "/profile/photo", icon: UserRound, label: "ملفي الشخصي" },
+          {
+            href: "/search",
+            icon: Search,
+            label: t({ ar: "ابحث عن طبيب", en: "Find a doctor" }, lang),
+          },
+          {
+            href: "/appointments",
+            icon: CalendarDays,
+            label: t({ ar: "حجوزاتي", en: "My appointments" }, lang),
+          },
+          {
+            href: "/id",
+            icon: QrCode,
+            label: t({ ar: "بطاقتي الطبية", en: "My medical ID" }, lang),
+          },
+          {
+            href: "/profile/photo",
+            icon: UserRound,
+            label: t({ ar: "ملفي الشخصي", en: "My profile" }, lang),
+          },
         ]}
       />
     </div>
   )
 }
 
-async function PharmaDashboard({ userId, name, roleLabel }: DashProps) {
+async function PharmaDashboard({ userId, name, roleLabel, lang }: DashProps) {
   const d = await getPharmaData(userId)
   return (
     <div className="space-y-6">
-      <DashHeader name={name} roleLabel={roleLabel} icon={Factory} />
+      <DashHeader
+        name={name}
+        roleLabel={roleLabel}
+        icon={Factory}
+        lang={lang}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           icon={Package}
-          label="المنتجات"
+          label={t({ ar: "المنتجات", en: "Products" }, lang)}
           value={fmt(d.productsCount)}
           href="/profile/products"
         />
         <KpiCard
           icon={Users}
-          label="المندوبين"
+          label={t({ ar: "المندوبين", en: "Reps" }, lang)}
           value={fmt(d.repsCount)}
           href="/profile/reps"
         />
-        <KpiCard icon={MapPin} label="زيارات المندوبين" value={fmt(d.visitsCount)} />
+        <KpiCard
+          icon={MapPin}
+          label={t({ ar: "زيارات المندوبين", en: "Rep visits" }, lang)}
+          value={fmt(d.visitsCount)}
+        />
         <KpiCard
           icon={Handshake}
-          label="الشراكات"
+          label={t({ ar: "الشراكات", en: "Partnerships" }, lang)}
           value={fmt(d.partnershipsCount)}
           href="/profile/partnerships"
         />
@@ -392,17 +540,23 @@ async function PharmaDashboard({ userId, name, roleLabel }: DashProps) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <SectionCard
-          title="أحدث المنتجات"
+          title={t({ ar: "أحدث المنتجات", en: "Recent products" }, lang)}
           actionHref="/profile/products"
-          actionLabel="إدارة المنتجات"
+          actionLabel={t({ ar: "إدارة المنتجات", en: "Manage products" }, lang)}
         >
           {d.recentProducts.length === 0 ? (
             <EmptyState
               icon={Pill}
-              title="لسه مفيش منتجات"
-              hint="أضف أول منتج لشركتك يظهر هنا"
+              title={t({ ar: "لسه مفيش منتجات", en: "No products yet" }, lang)}
+              hint={t(
+                {
+                  ar: "أضف أول منتج لشركتك يظهر هنا",
+                  en: "Add your company's first product to see it here",
+                },
+                lang,
+              )}
               ctaHref="/profile/products"
-              ctaLabel="أضف منتج"
+              ctaLabel={t({ ar: "أضف منتج", en: "Add product" }, lang)}
             />
           ) : (
             <ul className="divide-y divide-black/5">
@@ -420,7 +574,9 @@ async function PharmaDashboard({ userId, name, roleLabel }: DashProps) {
                     )}
                   </div>
                   <div className="shrink-0 text-sm text-slate-500">
-                    {p.price != null ? fmt(p.price) + " ج.م" : "—"}
+                    {p.price != null
+                      ? fmt(p.price) + t({ ar: " ج.م", en: " EGP" }, lang)
+                      : "—"}
                   </div>
                 </li>
               ))}
@@ -429,23 +585,29 @@ async function PharmaDashboard({ userId, name, roleLabel }: DashProps) {
         </SectionCard>
 
         <SectionCard
-          title="المندوبين"
+          title={t({ ar: "المندوبين", en: "Medical reps" }, lang)}
           actionHref="/profile/reps"
-          actionLabel="إدارة المندوبين"
+          actionLabel={t({ ar: "إدارة المندوبين", en: "Manage reps" }, lang)}
         >
           {d.topReps.length === 0 ? (
             <EmptyState
               icon={Users}
-              title="لا يوجد مندوبين بعد"
-              hint="ضيف مندوبينك وتابع زياراتهم"
+              title={t({ ar: "لا يوجد مندوبين", en: "No reps yet" }, lang)}
+              hint={t(
+                {
+                  ar: "أضف مندوبين لمتابعة زياراتهم",
+                  en: "Add reps to track their visits",
+                },
+                lang,
+              )}
               ctaHref="/profile/reps"
-              ctaLabel="أضف مندوب"
+              ctaLabel={t({ ar: "إضافة مندوب", en: "Add rep" }, lang)}
             />
           ) : (
             <ul className="divide-y divide-black/5">
-              {d.topReps.map((r) => (
+              {d.topReps.map((r, i) => (
                 <li
-                  key={r.id}
+                  key={i}
                   className="flex items-center justify-between gap-3 py-2.5"
                 >
                   <div className="min-w-0">
@@ -456,7 +618,9 @@ async function PharmaDashboard({ userId, name, roleLabel }: DashProps) {
                       <div className="text-xs text-slate-400">{r.region}</div>
                     )}
                   </div>
-                  <Badge tone="brand">{fmt(r.visits) + " زيارة"}</Badge>
+                  <span className="shrink-0 text-sm text-slate-500">
+                    {fmt(r.visits) + t({ ar: " زيارة", en: " visits" }, lang)}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -464,32 +628,53 @@ async function PharmaDashboard({ userId, name, roleLabel }: DashProps) {
         </SectionCard>
       </div>
 
-      <SectionCard title="أحدث زيارات المندوبين">
+      <SectionCard
+        title={t(
+          { ar: "أحدث زيارات المندوبين", en: "Recent rep visits" },
+          lang,
+        )}
+      >
         {d.recentVisits.length === 0 ? (
           <EmptyState
             icon={MapPin}
-            title="لا توجد زيارات مسجّلة"
-            hint="هتظهر هنا أول ما المندوبين يسجّلوا زياراتهم"
+            title={t({ ar: "لا توجد زيارات بعد", en: "No visits yet" }, lang)}
+            hint={t(
+              {
+                ar: "هتظهر زيارات المندوبين للأطباء هنا",
+                en: "Rep visits to doctors will appear here",
+              },
+              lang,
+            )}
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-right text-sm">
+            <table className="w-full text-start text-sm">
               <thead>
                 <tr className="text-xs text-slate-400">
-                  <th className="pb-2 font-medium">الطبيب</th>
-                  <th className="pb-2 font-medium">المنطقة</th>
-                  <th className="pb-2 font-medium">النتيجة</th>
-                  <th className="pb-2 font-medium">التاريخ</th>
+                  <th className="pb-2 font-medium">
+                    {t({ ar: "الطبيب", en: "Doctor" }, lang)}
+                  </th>
+                  <th className="pb-2 font-medium">
+                    {t({ ar: "المنطقة", en: "Region" }, lang)}
+                  </th>
+                  <th className="pb-2 font-medium">
+                    {t({ ar: "النتيجة", en: "Outcome" }, lang)}
+                  </th>
+                  <th className="pb-2 font-medium">
+                    {t({ ar: "التاريخ", en: "Date" }, lang)}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5">
-                {d.recentVisits.map((v) => (
-                  <tr key={v.id}>
+                {d.recentVisits.map((v, i) => (
+                  <tr key={i}>
                     <td className="py-2.5 font-medium text-slate-700">
                       {v.doctorName}
                     </td>
                     <td className="py-2.5 text-slate-500">{v.region ?? "—"}</td>
-                    <td className="py-2.5 text-slate-500">{v.outcome ?? "—"}</td>
+                    <td className="py-2.5 text-slate-500">
+                      {v.outcome ?? "—"}
+                    </td>
                     <td className="py-2.5 text-slate-500">
                       {fmtDate(v.visitDate)}
                     </td>
@@ -500,79 +685,99 @@ async function PharmaDashboard({ userId, name, roleLabel }: DashProps) {
           </div>
         )}
       </SectionCard>
-
-      <QuickActionsRow
-        actions={[
-          { href: "/profile/products", icon: Plus, label: "أضف منتج" },
-          { href: "/profile/reps", icon: UserRound, label: "أضف مندوب" },
-          { href: "/profile/invitations", icon: Mail, label: "الدعوات" },
-          { href: "/profile/partnerships", icon: Handshake, label: "الشراكات" },
-        ]}
-      />
     </div>
   )
 }
 
-async function RepDashboard({ userId, name, roleLabel }: DashProps) {
+async function RepDashboard({ userId, name, roleLabel, lang }: DashProps) {
   const d = await getRepSelfData(userId)
   return (
     <div className="space-y-6">
-      <DashHeader name={name} roleLabel={roleLabel} icon={Briefcase} />
+      <DashHeader
+        name={name}
+        roleLabel={roleLabel}
+        icon={Briefcase}
+        lang={lang}
+      />
 
       {!d.linked ? (
-        <SectionCard title="اربط حسابك بشركتك">
-          <EmptyState
-            icon={Building2}
-            title="حسابك لسه مش مربوط بشركة"
-            hint="اطلب كود الربط من شركة الأدوية وادخله من بوابة المندوب"
-            ctaHref="/rep"
-            ctaLabel="بوابة المندوب"
-          />
-        </SectionCard>
+        <EmptyState
+          icon={Briefcase}
+          title={t(
+            {
+              ar: "لم يتم ربطك بشركة بعد",
+              en: "You are not linked to a company yet",
+            },
+            lang,
+          )}
+          hint={t(
+            {
+              ar: "هتظهر بياناتك هنا بمجرد أن تربطك شركة أدوية بحسابها",
+              en: "Your data will appear here once a pharma company links you to their account",
+            },
+            lang,
+          )}
+        />
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
             <KpiCard
-              icon={Building2}
-              label="الشركة"
+              icon={Briefcase}
+              label={t({ ar: "الشركة", en: "Company" }, lang)}
               value={d.companyName ?? "—"}
             />
-            <KpiCard icon={MapPin} label="المنطقة" value={d.region ?? "—"} />
             <KpiCard
-              icon={ClipboardList}
-              label="زياراتي"
+              icon={MapPin}
+              label={t({ ar: "المنطقة", en: "Region" }, lang)}
+              value={d.region ?? "—"}
+            />
+            <KpiCard
+              icon={Clock}
+              label={t({ ar: "زياراتي", en: "My visits" }, lang)}
               value={fmt(d.visitsCount)}
-              href="/rep"
             />
           </div>
 
           <SectionCard
-            title="أحدث زياراتي"
-            actionHref="/rep"
-            actionLabel="كل الزيارات"
+            title={t({ ar: "أحدث زياراتي", en: "My recent visits" }, lang)}
           >
             {d.recentVisits.length === 0 ? (
               <EmptyState
                 icon={MapPin}
-                title="لسه مسجّلتش زيارات"
-                hint="سجّل زياراتك من بوابة المندوب"
-                ctaHref="/rep"
-                ctaLabel="سجّل زيارة"
+                title={t(
+                  { ar: "لا توجد زيارات بعد", en: "No visits yet" },
+                  lang,
+                )}
+                hint={t(
+                  {
+                    ar: "سجّل زياراتك للأطباء عشان تظهر هنا",
+                    en: "Log your visits to doctors to see them here",
+                  },
+                  lang,
+                )}
               />
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-right text-sm">
+                <table className="w-full text-start text-sm">
                   <thead>
                     <tr className="text-xs text-slate-400">
-                      <th className="pb-2 font-medium">الطبيب</th>
-                      <th className="pb-2 font-medium">المنطقة</th>
-                      <th className="pb-2 font-medium">النتيجة</th>
-                      <th className="pb-2 font-medium">التاريخ</th>
+                      <th className="pb-2 font-medium">
+                        {t({ ar: "الطبيب", en: "Doctor" }, lang)}
+                      </th>
+                      <th className="pb-2 font-medium">
+                        {t({ ar: "المنطقة", en: "Region" }, lang)}
+                      </th>
+                      <th className="pb-2 font-medium">
+                        {t({ ar: "النتيجة", en: "Outcome" }, lang)}
+                      </th>
+                      <th className="pb-2 font-medium">
+                        {t({ ar: "التاريخ", en: "Date" }, lang)}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-black/5">
-                    {d.recentVisits.map((v) => (
-                      <tr key={v.id}>
+                    {d.recentVisits.map((v, i) => (
+                      <tr key={i}>
                         <td className="py-2.5 font-medium text-slate-700">
                           {v.doctorName}
                         </td>
@@ -600,22 +805,19 @@ async function RepDashboard({ userId, name, roleLabel }: DashProps) {
 
 function QuickActionsRow({
   actions,
+  lang,
 }: {
   actions: { href: string; icon: typeof Stethoscope; label: string }[]
+  lang: Lang
 }) {
   return (
-    <div>
-      <h2 className="mb-3 font-display font-bold text-slate-800">
-        إجراءات سريعة
+    <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
+      <h2 className="font-display mb-4 font-bold text-slate-800">
+        {t({ ar: "إجراءات سريعة", en: "Quick actions" }, lang)}
       </h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {actions.map((a) => (
-          <QuickAction
-            key={a.href}
-            href={a.href}
-            icon={a.icon}
-            label={a.label}
-          />
+          <QuickAction key={a.href} href={a.href} icon={a.icon} label={a.label} />
         ))}
       </div>
     </div>
