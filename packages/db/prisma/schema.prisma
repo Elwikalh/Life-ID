@@ -83,6 +83,10 @@ createdAt      DateTime        @default(now())
 adminPermissions String[] @default([])
 wallet        Wallet?        @relation("UserWallet")
 notifications Notification[] @relation("UserNotifications")
+debtsOwed        Debt[]          @relation("DebtCreditor")
+debtsOwing       Debt[]          @relation("DebtDebtor")
+payoutsRequested PayoutRequest[] @relation("PayoutDoctor")
+payoutsToSend    PayoutRequest[] @relation("PayoutPartner")
 }
 
 model MedicalId {
@@ -158,6 +162,7 @@ model Partnership {
   partnerName  String
   partnerType  String
   partnerPhone String?
+partnerUserId String?
   discountPct  Int      @default(0)
   patientPct   Int      @default(0)
   doctorPct    Int      @default(0)
@@ -309,6 +314,12 @@ model Wallet {
  userId    String     @unique
  balance   Int        @default(0)
  currency  String     @default("EGP")
+payoutName     String?
+payoutInstapay String?
+payoutMobile   String?
+payoutBank     String?
+payoutAccount  String?
+payoutNote     String?
  txns      WalletTx[]
  createdAt DateTime   @default(now())
  updatedAt DateTime   @updatedAt
@@ -343,4 +354,54 @@ model Notification {
 
  @@index([userId, read])
  @@index([createdAt])
+}
+enum DebtStatus {
+  open
+  requested
+  sent
+  settled
+}
+
+enum PayoutStatus {
+  requested
+  sent
+  received
+  cancelled
+}
+
+model Debt {
+  id          String     @id @default(cuid())
+  creditor    User       @relation("DebtCreditor", fields: [creditorId], references: [id], onDelete: Cascade)
+  creditorId  String
+  debtor      User       @relation("DebtDebtor", fields: [debtorId], references: [id], onDelete: Cascade)
+  debtorId    String
+  amount      Int
+  status      DebtStatus @default(open)
+  refType     String?
+  refId       String?
+  description String?
+  payoutId    String?
+  createdAt   DateTime   @default(now())
+  settledAt   DateTime?
+
+  @@index([creditorId, status])
+  @@index([debtorId, status])
+  @@index([payoutId])
+}
+
+model PayoutRequest {
+  id          String       @id @default(cuid())
+  doctor      User         @relation("PayoutDoctor", fields: [doctorId], references: [id], onDelete: Cascade)
+  doctorId    String
+  partner     User         @relation("PayoutPartner", fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId   String
+  amount      Int
+  status      PayoutStatus @default(requested)
+  note        String?
+  requestedAt DateTime     @default(now())
+  sentAt      DateTime?
+  receivedAt  DateTime?
+
+  @@index([doctorId, status])
+  @@index([partnerId, status])
 }
