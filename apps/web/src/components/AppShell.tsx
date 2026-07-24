@@ -19,7 +19,6 @@ import {
   Package,
   Users,
   MapPin,
-  Bell,
   Menu,
   Wallet,
   FlaskConical,
@@ -35,6 +34,7 @@ import {
   useUser,
 } from "@clerk/nextjs"
 import { ROLE_LABELS, UI, t, type Bi, type Lang } from "../lib/i18n"
+import NotificationBell from "./NotificationBell"
 
 type NavItem = {
   href: string
@@ -367,13 +367,7 @@ export default function AppShell({
 
           <div className="flex items-center gap-3">
             <LangToggle lang={lang} />
-            <Link
-              href="/notifications"
-              className="rounded-lg border border-black/10 p-2 text-slate-500 hover:text-slate-700"
-              aria-label={t(UI.notifications, lang)}
-            >
-              <Bell className="h-5 w-5" />
-            </Link>
+            <NotificationBell lang={lang} />
             <div className="hidden text-end leading-tight sm:block">
               <div className="text-sm font-semibold text-slate-700">
                 {fullName}
