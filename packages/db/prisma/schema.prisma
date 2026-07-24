@@ -109,6 +109,14 @@ model Prescription {
   doctorId          String
   patientId         String?
   items             Json
+diagnosis         String?
+clinicalNotes     String?
+labRequests       Json?
+imagingRequests   Json?
+dangerNote        String?
+emergencyPlan     String?
+followUpAt        DateTime?
+followUpNote      String?
   status            RxStatus        @default(draft)
   currentPharmacyId String?
   triedPharmacyIds  String[]        @default([])
