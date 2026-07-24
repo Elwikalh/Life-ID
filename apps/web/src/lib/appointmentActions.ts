@@ -3,7 +3,6 @@
 import { currentUser } from "@clerk/nextjs/server"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@life-id/db"
-import { settleAppointment } from "./wallet"
 
 type Status = "pending" | "confirmed" | "completed" | "cancelled"
 
@@ -24,10 +23,6 @@ export async function setAppointmentStatus(formData: FormData) {
     })
     if (appt && appt.providerId === u.id) {
       await prisma.appointment.update({ where: { id }, data: { status } })
-      // عند اكتمال الحجز: احسب الصافي وأضف الدخل لمحفظة مقدّم الخدمة
-      if (status === "completed") {
-        await settleAppointment(id)
-      }
     }
   } catch {}
   revalidatePath("/dashboard")
