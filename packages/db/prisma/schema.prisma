@@ -405,3 +405,36 @@ model PayoutRequest {
   @@index([doctorId, status])
   @@index([partnerId, status])
 }
+
+
+enum ServiceOrderType {
+  lab
+  radiology
+}
+
+enum ServiceOrderStatus {
+  routed
+  accepted
+  done
+  cancelled
+}
+
+model ServiceOrder {
+  id             String             @id @default(cuid())
+  prescriptionId String?
+  doctorId       String
+  patientId      String?
+  partnerUserId  String
+  partnerName    String?
+  type           ServiceOrderType
+  items          Json
+  status         ServiceOrderStatus @default(routed)
+  invoiceTotal   Int?
+  note           String?
+  createdAt      DateTime           @default(now())
+  doneAt         DateTime?
+
+  @@index([partnerUserId, status])
+  @@index([doctorId])
+  @@index([patientId])
+}
