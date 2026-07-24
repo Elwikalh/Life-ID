@@ -1,5 +1,18 @@
 import Link from "next/link"
 import type { LucideIcon } from "lucide-react"
+import { ArrowLeft, ArrowUpRight } from "lucide-react"
+
+// ألوان المؤشرات — كل لون باسمه الكامل عشان Tailwind يشوفه
+type Tone = "brand" | "sky" | "amber" | "emerald" | "violet" | "danger"
+
+const CHIP: Record<Tone, string> = {
+  brand: "bg-brand-50 text-brand-600",
+  sky: "bg-sky-50 text-sky-600",
+  amber: "bg-amber-50 text-amber-600",
+  emerald: "bg-emerald-50 text-emerald-600",
+  violet: "bg-violet-50 text-violet-600",
+  danger: "bg-danger/10 text-danger",
+}
 
 export function PageIntro({
   title,
@@ -35,14 +48,16 @@ export function DashHeader({
           <Icon className="h-7 w-7" />
         </div>
         <div className="min-w-0">
-          <div className="text-sm text-white/80">{roleLabel}</div>
-          <h1 className="font-display truncate text-2xl font-extrabold">
+          <span className="inline-block rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white/90">
+            {roleLabel}
+          </span>
+          <h1 className="mt-1 truncate font-display text-2xl font-extrabold">
             أهلاً، {name}
           </h1>
         </div>
       </div>
-      <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
-      <div className="pointer-events-none absolute -bottom-12 left-28 h-32 w-32 rounded-full bg-white/5" />
+      <div className="pointer-events-none absolute -start-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+      <div className="pointer-events-none absolute -bottom-12 start-28 h-32 w-32 rounded-full bg-white/5" />
     </div>
   )
 }
@@ -52,22 +67,39 @@ export function KpiCard({
   label,
   value,
   href,
+  hint,
+  tone = "brand",
 }: {
   icon: LucideIcon
   label: string
   value: string | number
   href?: string
+  hint?: string
+  tone?: Tone
 }) {
   const inner = (
-    <div className="flex h-full items-center gap-4 rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition hover:shadow-md">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-        <Icon className="h-6 w-6" />
+    <div className="group flex h-full flex-col justify-between gap-4 rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex items-center justify-between">
+        <div
+          className={
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl " +
+            CHIP[tone]
+          }
+        >
+          <Icon className="h-6 w-6" />
+        </div>
+        {href ? (
+          <ArrowUpRight className="h-4 w-4 text-slate-300 transition group-hover:text-brand-500" />
+        ) : null}
       </div>
       <div className="min-w-0">
-        <div className="truncate text-sm text-slate-500">{label}</div>
         <div className="truncate font-display text-2xl font-extrabold text-slate-800">
           {value}
         </div>
+        <div className="mt-0.5 truncate text-sm text-slate-500">{label}</div>
+        {hint ? (
+          <div className="mt-1 truncate text-xs text-slate-400">{hint}</div>
+        ) : null}
       </div>
     </div>
   )
@@ -82,11 +114,13 @@ export function KpiCard({
 
 export function SectionCard({
   title,
+  icon: Icon,
   actionHref,
   actionLabel,
   children,
 }: {
   title: string
+  icon?: LucideIcon
   actionHref?: string
   actionLabel?: string
   children: React.ReactNode
@@ -94,13 +128,21 @@ export function SectionCard({
   return (
     <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="font-display font-bold text-slate-800">{title}</h2>
+        <h2 className="flex items-center gap-2 font-display font-bold text-slate-800">
+          {Icon ? (
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+              <Icon className="h-4 w-4" />
+            </span>
+          ) : null}
+          {title}
+        </h2>
         {actionHref && actionLabel && (
           <Link
             href={actionHref}
-            className="shrink-0 text-xs font-medium text-brand-600 hover:text-brand-700"
+            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700"
           >
             {actionLabel}
+            <ArrowLeft className="h-3.5 w-3.5" />
           </Link>
         )}
       </div>
@@ -123,16 +165,18 @@ export function EmptyState({
   ctaLabel?: string
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-black/10 bg-slate-50/50 px-6 py-10 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-500">
-        <Icon className="h-6 w-6" />
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-black/10 bg-slate-50/60 px-6 py-12 text-center">
+      <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-500">
+        <Icon className="h-7 w-7" />
       </div>
       <div className="font-medium text-slate-700">{title}</div>
-      {hint && <div className="mt-1 text-sm text-slate-400">{hint}</div>}
+      {hint && (
+        <div className="mt-1 max-w-sm text-sm text-slate-400">{hint}</div>
+      )}
       {ctaHref && ctaLabel && (
         <Link
           href={ctaHref}
-          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600"
         >
           {ctaLabel}
         </Link>
@@ -153,9 +197,9 @@ export function QuickAction({
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-2xl border border-black/5 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm transition hover:border-brand-200 hover:text-brand-700"
+      className="group flex items-center gap-3 rounded-2xl border border-black/5 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:text-brand-700 hover:shadow-md"
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600 transition group-hover:bg-brand-100">
         <Icon className="h-5 w-5" />
       </span>
       {label}
@@ -168,19 +212,21 @@ export function Badge({
   tone = "neutral",
 }: {
   children: React.ReactNode
-  tone?: "neutral" | "brand" | "amber" | "sky" | "danger"
+  tone?: "neutral" | "brand" | "amber" | "sky" | "emerald" | "danger"
 }) {
   const cls = {
     neutral: "bg-slate-100 text-slate-600",
     brand: "bg-brand-50 text-brand-700",
     amber: "bg-amber-100 text-amber-700",
     sky: "bg-sky-100 text-sky-700",
+    emerald: "bg-emerald-100 text-emerald-700",
     danger: "bg-danger/10 text-danger",
   }[tone]
   return (
     <span
       className={
-        "inline-block rounded-full px-2.5 py-0.5 text-xs font-medium " + cls
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium " +
+        cls
       }
     >
       {children}
