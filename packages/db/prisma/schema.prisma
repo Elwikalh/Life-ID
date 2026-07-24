@@ -80,6 +80,7 @@ staff            StaffMembership[] @relation("ProviderStaff")
 staffMemberships StaffMembership[] @relation("StaffMemberships")
 createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+adminPermissions String[] @default([])
 }
 
 model MedicalId {
