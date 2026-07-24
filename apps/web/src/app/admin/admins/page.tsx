@@ -102,7 +102,7 @@ export default async function AdminsPage({
         <div>
           <label className="mb-1 flex items-center gap-1.5 text-sm font-medium text-slate-700">
             <Phone className="h-4 w-4 text-brand-500" />
-            {t({ ar: "موبايل / رقم قومي", en: "Mobile / national ID" }, lang)}
+{t({ ar: "موبايل / ID التطبيق / QR", en: "Mobile / App ID / QR" }, lang)}
           </label>
           <input
             type="text"
