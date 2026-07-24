@@ -25,11 +25,11 @@ export default async function AdminsPage({
   const user = await currentUser()
   if (!user) redirect("/sign-in")
   const meta = user.publicMetadata as { role?: Role }
-  if (meta.role !== "admin") redirect("/dashboard")
+  if (meta.role !== "super_admin") redirect("/dashboard")
 
   const lang: Lang = await getLang(meta.role)
   const admins = await prisma.user.findMany({
-    where: { role: "admin" },
+    where: { role: "super_admin" },
     orderBy: { createdAt: "desc" },
   })
 
@@ -37,15 +37,23 @@ export default async function AdminsPage({
   const saved = sp.saved === "1"
   const errorCode = typeof sp.error === "string" ? sp.error : null
   const errorText = errorCode
-    ? errorCode === "notfound"
+    ? errorCode === "denied"
       ? t(
           {
-            ar: "مفيش حساب بالرقم ده — لازم يسجّل في التطبيق الأول.",
-            en: "No account with this number — must register first.",
+            ar: "ممنوع — لازم تكون أدمن منصة.",
+            en: "Denied — platform admin only.",
           },
           lang,
         )
-      : t({ ar: "حصل خطأ، حاول تاني.", en: "Something went wrong." }, lang)
+      : errorCode === "notfound"
+        ? t(
+            {
+              ar: "مفيش حساب بالرقم ده — لازم يسجّل في التطبيق الأول.",
+              en: "No account with this number — must register first.",
+            },
+            lang,
+          )
+        : t({ ar: "حصل خطأ، حاول تاني.", en: "Something went wrong." }, lang)
     : null
 
   return (
