@@ -75,6 +75,24 @@ export async function addStaff(formData: FormData) {
   redirect("/profile/staff?saved=1")
 }
 
+// تعديل بيانات موظّف موجود (الوظيفة/الفرع/الصلاحيات) برقم العضوية
+export async function editStaff(formData: FormData) {
+  const u = await requireProvider()
+  const id = String(formData.get("membershipId") ?? "")
+  const jobTitle = String(formData.get("jobTitle") ?? "").trim() || null
+  const branchId = String(formData.get("branchId") ?? "").trim() || null
+  const permissions = formData.getAll("permissions").map(String)
+  const existing = await prisma.staffMembership.findUnique({ where: { id } })
+  if (!existing || existing.providerId !== u.id)
+    redirect("/profile/staff?error=fail")
+  await prisma.staffMembership.update({
+    where: { id },
+    data: { jobTitle, branchId, permissions },
+  })
+  revalidatePath("/profile/staff")
+  redirect("/profile/staff?saved=1")
+}
+
 export async function removeStaff(formData: FormData) {
   const u = await requireProvider()
   const id = String(formData.get("membershipId") ?? "")
