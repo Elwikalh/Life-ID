@@ -21,6 +21,7 @@ import {
   MapPin,
   Bell,
   Menu,
+  Wallet,
   FlaskConical,
   Radiation,
   Building2,
@@ -66,6 +67,11 @@ function navForRole(role?: string): NavItem[] {
     label: { ar: "العمولات", en: "Commissions" },
     icon: Calculator,
   };
+  const wallet: NavItem = {
+  href: "/profile/wallet",
+  label: { ar: "المحفظة", en: "Wallet" },
+  icon: Wallet,
+};
   const branches: NavItem = {
     href: "/profile/branches",
     label: { ar: "الفروع", en: "Branches" },
@@ -140,12 +146,13 @@ function navForRole(role?: string): NavItem[] {
       },
       branches,
       staff,
-      commissions,
-      profile,
-    ];
-  }
+       commissions,
+    wallet,
+    profile,
+  ];
+}
 
-  if (role === "medical_rep") {
+if (role === "pharmacy") {
     return [
       dashboard,
       {
