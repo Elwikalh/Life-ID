@@ -53,6 +53,10 @@ model User {
   specialty       String?
   bio             String?
   consultationFee Int?
+nationalId       String?  @unique
+idPhotoFrontUrl  String?
+idPhotoBackUrl   String?
+idVerified       Boolean  @default(false)
 
   branchesCount  Int?
   city           String?
