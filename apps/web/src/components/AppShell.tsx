@@ -67,11 +67,6 @@ function navForRole(role?: string): NavItem[] {
     label: { ar: "العمولات", en: "Commissions" },
     icon: Calculator,
   };
-  const wallet: NavItem = {
-  href: "/profile/wallet",
-  label: { ar: "المحفظة", en: "Wallet" },
-  icon: Wallet,
-};
   const branches: NavItem = {
     href: "/profile/branches",
     label: { ar: "الفروع", en: "Branches" },
@@ -81,6 +76,11 @@ function navForRole(role?: string): NavItem[] {
     href: "/profile/staff",
     label: { ar: "الموظفون", en: "Staff" },
     icon: Users,
+  };
+  const wallet: NavItem = {
+    href: "/profile/wallet",
+    label: { ar: "المحفظة", en: "Wallet" },
+    icon: Wallet,
   };
   const profile: NavItem = {
     href: "/profile",
@@ -146,13 +146,13 @@ function navForRole(role?: string): NavItem[] {
       },
       branches,
       staff,
-       commissions,
-    wallet,
-    profile,
-  ];
-}
+      commissions,
+      wallet,
+      profile,
+    ];
+  }
 
-if (role === "pharmacy") {
+  if (role === "medical_rep") {
     return [
       dashboard,
       {
@@ -202,6 +202,7 @@ if (role === "pharmacy") {
       branches,
       staff,
       commissions,
+      wallet,
       profile,
     ];
   }
@@ -218,6 +219,7 @@ if (role === "pharmacy") {
       branches,
       staff,
       commissions,
+      wallet,
       profile,
     ];
   }
@@ -234,6 +236,7 @@ if (role === "pharmacy") {
     branches,
     staff,
     commissions,
+    wallet,
     profile,
   ];
 }
