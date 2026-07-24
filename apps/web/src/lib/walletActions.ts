@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import {
   savePayoutDetails,
   requestPayout,
+  markPayoutSent,
   confirmPayoutReceived,
 } from "./wallet"
 
@@ -35,6 +36,16 @@ export async function requestPayoutAction(formData: FormData) {
   const partnerId = String(formData.get("partnerId") || "")
   if (!partnerId) return
   await requestPayout(u.id, partnerId)
+  revalidatePath("/profile/wallet")
+}
+
+// الشريك يعلّم إنه أرسل المبلغ
+export async function markPayoutSentAction(formData: FormData) {
+  const u = await currentUser()
+  if (!u) return
+  const payoutId = String(formData.get("payoutId") || "")
+  if (!payoutId) return
+  await markPayoutSent(payoutId, u.id)
   revalidatePath("/profile/wallet")
 }
 
