@@ -256,3 +256,35 @@ model Review {
   @@unique([providerId, patientId])
   @@index([providerId])
 }
+model Branch {
+  id         String            @id @default(cuid())
+  providerId String
+  provider   User              @relation("ProviderBranches", fields: [providerId], references: [id], onDelete: Cascade)
+  name       String
+  city       String?
+  address    String?
+  phone      String?
+  isMain     Boolean           @default(false)
+  createdAt  DateTime          @default(now())
+  staff      StaffMembership[]
+
+  @@index([providerId])
+}
+
+model StaffMembership {
+  id          String   @id @default(cuid())
+  providerId  String
+  provider    User     @relation("ProviderStaff", fields: [providerId], references: [id], onDelete: Cascade)
+  memberId    String
+  member      User     @relation("StaffMemberships", fields: [memberId], references: [id], onDelete: Cascade)
+  jobTitle    String?
+  permissions String[]
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+
+  @@unique([providerId, memberId])
+  @@index([providerId])
+  @@index([memberId])
+}
