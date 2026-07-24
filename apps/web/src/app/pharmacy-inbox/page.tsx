@@ -55,18 +55,18 @@ export default async function PharmacyInboxPage({
   })
 
   return (
-    <main className="mx-auto max-w-4xl space-y-6 px-4 py-8">
+    <div className="mx-auto w-full max-w-3xl">
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-600"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
       >
         <ArrowRight className="h-4 w-4" />
         رجوع للوحة
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">روشتات واردة</h1>
-        <p className="text-sm text-slate-500">
+      <div className="mb-5">
+        <h1 className="text-xl font-extrabold text-slate-800">روشتات واردة</h1>
+        <p className="mt-1 text-sm text-slate-500">
           الروشتات اللي وصلتك من الأطباء. أكّد التوفّر أو حوّلها لو الدوا ناقص.
         </p>
       </div>
@@ -74,8 +74,10 @@ export default async function PharmacyInboxPage({
       {banner && (
         <div
           className={
-            "rounded-xl px-4 py-3 text-sm " +
-            (banner.ok ? "bg-brand-50 text-brand-700" : "bg-danger/10 text-danger")
+            "mb-4 rounded-xl px-4 py-3 text-sm " +
+            (banner.ok
+              ? "bg-emerald-50 text-emerald-700"
+              : "bg-rose-50 text-rose-700")
           }
         >
           {banner.text}
@@ -83,61 +85,74 @@ export default async function PharmacyInboxPage({
       )}
 
       {orders.length === 0 ? (
-        <div className="rounded-2xl border border-black/5 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
           لا توجد روشتات واردة حالياً.
         </div>
       ) : (
-        <ul className="space-y-4">
+        <div className="space-y-4">
           {orders.map((rx) => {
             const items = Array.isArray(rx.items)
               ? (rx.items as unknown as RxItem[])
               : []
             return (
-              <li
+              <div
                 key={rx.id}
-                className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm"
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
               >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-slate-800">
-                      المريض: {rx.appointment?.patient?.fullName ?? "—"}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      الطبيب: {rx.appointment?.provider?.fullName ?? "—"}
-                    </p>
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="text-sm font-semibold text-slate-700">
+                    المريض: {rx.appointment?.patient?.fullName ?? "—"}
+                  </div>
+                  <div className="text-xs text-slate-400">
+                    الطبيب: {rx.appointment?.provider?.fullName ?? "—"}
                   </div>
                 </div>
 
-                <ul className="mt-3 space-y-1 rounded-xl bg-slate-50 p-3 text-sm">
+                <ul className="mb-4 space-y-1">
                   {items.map((it, i) => (
-                    <li key={i} className="flex justify-between gap-2">
-                      <span className="font-medium text-slate-700">{it.drug}</span>
+                    <li
+                      key={i}
+                      className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                    >
+                      <span className="font-medium text-slate-700">
+                        {it.drug}
+                      </span>
                       {it.dosage ? (
-                        <span className="text-slate-500">{it.dosage}</span>
+                        <span className="text-xs text-slate-400">
+                          {it.dosage}
+                        </span>
                       ) : null}
                     </li>
                   ))}
                 </ul>
 
                 {rx.status === "routed" && (
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <form action={pharmacyRespond}>
-                      <input type="hidden" name="prescriptionId" value={rx.id} />
+                      <input
+                        type="hidden"
+                        name="prescriptionId"
+                        value={rx.id}
+                      />
                       <input type="hidden" name="decision" value="available" />
                       <button
                         type="submit"
-                        className="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
+                        className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
                       >
                         <Check className="h-4 w-4" />
                         الأدوية متوفّرة
                       </button>
                     </form>
                     <form action={pharmacyRespond}>
-                      <input type="hidden" name="prescriptionId" value={rx.id} />
-                      <input type="hidden" name="decision" value="unavailable" />
+                      <input
+                        type="hidden"
+                        name="prescriptionId"
+                        value={rx.id}
+                      />
+                      <input type="hidden" name="decision" value="nostock" />
                       <button
                         type="submit"
-                        className="inline-flex items-center gap-1 rounded-lg border border-black/10 px-4 py-2 text-sm font-medium text-slate-600 hover:border-danger/40 hover:text-danger"
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
                       >
                         <X className="h-4 w-4" />
                         دوا ناقص — حوّل للتالية
@@ -147,51 +162,76 @@ export default async function PharmacyInboxPage({
                 )}
 
                 {rx.status === "accepted" && (
-                  <p className="mt-4 rounded-lg bg-sky-50 px-3 py-2 text-sm text-sky-700">
+                  <div className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
                     بانتظار تأكيد المريض لطريقة الاستلام.
-                  </p>
+                  </div>
                 )}
 
                 {rx.status === "confirmed" && (
-                  <div className="mt-4 space-y-2">
-                    <div className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700">
-                      <p className="flex items-center gap-1 font-medium">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+                      <span className="inline-flex items-center gap-1 font-medium text-slate-700">
                         {rx.deliveryMethod === "home" ? (
                           <Home className="h-4 w-4" />
                         ) : (
                           <MapPin className="h-4 w-4" />
                         )}
                         {DELIVERY_LABELS[rx.deliveryMethod ?? "pickup"]}
-                      </p>
+                      </span>
                       {rx.deliveryMethod === "home" && rx.patientAddress && (
-                        <p className="mt-1 text-brand-600">
+                        <span className="text-xs text-slate-400">
                           العنوان: {rx.patientAddress}
-                        </p>
+                        </span>
                       )}
                       {rx.patientPhone && (
-                        <p className="mt-1 flex items-center gap-1 text-brand-600">
+                        <span className="inline-flex items-center gap-1 text-xs text-slate-400">
                           <Phone className="h-3.5 w-3.5" />
                           {rx.patientPhone}
-                        </p>
+                        </span>
                       )}
                     </div>
-                    <form action={markDelivered}>
-                      <input type="hidden" name="prescriptionId" value={rx.id} />
+
+                    <form
+                      action={markDelivered}
+                      className="flex flex-wrap items-end gap-2"
+                    >
+                      <input
+                        type="hidden"
+                        name="prescriptionId"
+                        value={rx.id}
+                      />
+                      <div>
+                        <label className="mb-1 block text-xs text-slate-500">
+                          قيمة الفاتورة (ج.م)
+                        </label>
+                        <input
+                          type="number"
+                          name="invoiceTotal"
+                          min="0"
+                          step="1"
+                          placeholder="0"
+                          className="w-32 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500"
+                        />
+                      </div>
                       <button
                         type="submit"
-                        className="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
+                        className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
                       >
                         <Truck className="h-4 w-4" />
                         تم التسليم
                       </button>
                     </form>
+                    <p className="text-xs text-slate-400">
+                      لو دخّلت قيمة الفاتورة، هيتسجّل تلقائياً استحقاق الطبيب
+                      حسب نسبته المتفق عليها.
+                    </p>
                   </div>
                 )}
-              </li>
+              </div>
             )
           })}
-        </ul>
+        </div>
       )}
-    </main>
+    </div>
   )
 }
