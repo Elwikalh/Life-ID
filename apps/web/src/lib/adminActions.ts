@@ -80,19 +80,26 @@ export async function setUserStatus(formData: FormData) {
   redirect(base + (ok ? "?ok=" + status : "?error=fail"))
 }
 
-// إضافة أدمن منصة (super_admin) برقم الموبايل/الرقم القومي + الصلاحيات
+// إضافة أدمن منصة (super_admin) بالموبايل أو ID التطبيق (كود QR) + الصلاحيات
 export async function addAdmin(formData: FormData) {
   const me = await getAdmin()
   if (!me) redirect("/admin/admins?error=denied")
 
-  const identifier = String(formData.get("identifier") ?? "")
-    .trim()
-    .replace(/\s/g, "")
+  const raw = String(formData.get("identifier") ?? "").trim()
   const permissions = formData.getAll("permissions").map(String)
-  if (!identifier) redirect("/admin/admins?error=notfound")
+  if (!raw) redirect("/admin/admins?error=notfound")
+
+  const qrMatch = raw.match(/\/e\/([^/?#\s]+)/)
+  const code = (qrMatch ? decodeURIComponent(qrMatch[1]) : raw).replace(
+    /\s/g,
+    "",
+  )
+  const phone = raw.replace(/\s/g, "")
 
   const member = await prisma.user.findFirst({
-    where: { OR: [{ phone: identifier }, { nationalId: identifier }] },
+    where: {
+      OR: [{ phone }, { medicalId: { is: { qrCode: code } } }],
+    },
   })
   if (!member) redirect("/admin/admins?error=notfound")
 
