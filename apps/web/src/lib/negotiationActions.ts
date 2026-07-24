@@ -95,8 +95,7 @@ export async function respondNegotiation(formData: FormData) {
             const existing = await prisma.partnership.findFirst({
               where: {
                 ownerId: inv.inviterId,
-                partnerName: inv.inviteeName,
-                partnerType: inv.inviteeType,
+                partnerUserId: inv.inviteeUserId,
               },
             })
             if (!existing) {
@@ -105,6 +104,7 @@ export async function respondNegotiation(formData: FormData) {
                   ownerId: inv.inviterId,
                   partnerName: inv.inviteeName,
                   partnerType: inv.inviteeType,
+                  partnerUserId: inv.inviteeUserId,
                   discountPct: inv.currentPct ?? 0,
                   patientPct: 0,
                   doctorPct: 0,
@@ -137,7 +137,9 @@ export async function respondNegotiation(formData: FormData) {
 
   revalidatePath("/negotiations")
   redirect(
-    result === "fail" ? "/negotiations?error=fail" : "/negotiations?ok=" + result,
+    result === "fail"
+      ? "/negotiations?error=fail"
+      : "/negotiations?ok=" + result,
   )
 }
 
