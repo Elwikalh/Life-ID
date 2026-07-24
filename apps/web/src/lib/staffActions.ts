@@ -24,19 +24,32 @@ async function requireProvider() {
   return u
 }
 
+// يلاقي المستخدم بالموبايل أو بـ ID التطبيق (كود QR) — لو اتلصق رابط QR بيطلّع الكود منه
+async function findMember(identifierRaw: string) {
+  const raw = identifierRaw.trim()
+  if (!raw) return null
+  const qrMatch = raw.match(/\/e\/([^/?#\s]+)/)
+  const code = (qrMatch ? decodeURIComponent(qrMatch[1]) : raw).replace(
+    /\s/g,
+    "",
+  )
+  const phone = raw.replace(/\s/g, "")
+  return prisma.user.findFirst({
+    where: {
+      OR: [{ phone }, { medicalId: { is: { qrCode: code } } }],
+    },
+  })
+}
+
 export async function addStaff(formData: FormData) {
   const u = await requireProvider()
   const identifier = String(formData.get("identifier") ?? "")
-    .trim()
-    .replace(/\s/g, "")
   const jobTitle = String(formData.get("jobTitle") ?? "").trim() || null
   const branchId = String(formData.get("branchId") ?? "").trim() || null
   const permissions = formData.getAll("permissions").map(String)
-  if (!identifier) redirect("/profile/staff?error=identifier")
+  if (!identifier.trim()) redirect("/profile/staff?error=identifier")
 
-  const member = await prisma.user.findFirst({
-    where: { OR: [{ phone: identifier }, { nationalId: identifier }] },
-  })
+  const member = await findMember(identifier)
   if (!member) redirect("/profile/staff?error=notfound")
   if (member.id === u.id) redirect("/profile/staff?error=self")
 
