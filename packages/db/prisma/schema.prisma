@@ -81,6 +81,8 @@ staffMemberships StaffMembership[] @relation("StaffMemberships")
 createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 adminPermissions String[] @default([])
+wallet        Wallet?        @relation("UserWallet")
+notifications Notification[] @relation("UserNotifications")
 }
 
 model MedicalId {
@@ -291,4 +293,54 @@ model StaffMembership {
   @@unique([providerId, memberId])
   @@index([providerId])
   @@index([memberId])
+}
+enum WalletTxType {
+ commission
+ earning
+ payout
+ refund
+ adjustment
+ topup
+}
+
+model Wallet {
+ id        String     @id @default(cuid())
+ user      User       @relation("UserWallet", fields: [userId], references: [id], onDelete: Cascade)
+ userId    String     @unique
+ balance   Int        @default(0)
+ currency  String     @default("EGP")
+ txns      WalletTx[]
+ createdAt DateTime   @default(now())
+ updatedAt DateTime   @updatedAt
+}
+
+model WalletTx {
+ id          String       @id @default(cuid())
+ wallet      Wallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
+ walletId    String
+ amount      Int
+ type        WalletTxType
+ status      String       @default("completed")
+ description String?
+ refType     String?
+ refId       String?
+ createdAt   DateTime     @default(now())
+
+ @@index([walletId])
+ @@index([refType, refId])
+}
+
+model Notification {
+ id        String   @id @default(cuid())
+ user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+ userId    String
+ title     String
+ body      String?
+ type      String   @default("info")
+ href      String?
+ read      Boolean  @default(false)
+ createdAt DateTime @default(now())
+
+ @@index([userId, read])
+ @@index([createdAt])
 }
