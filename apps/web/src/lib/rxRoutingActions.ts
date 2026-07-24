@@ -4,6 +4,7 @@ import { currentUser } from "@clerk/nextjs/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { prisma } from "@life-id/db"
+import { accrueDebt } from "./wallet"
 
 function clampPriority(n: number) {
   if (!Number.isFinite(n) || n < 1) return 1
@@ -154,22 +155,57 @@ export async function pharmacyRespond(formData: FormData) {
   redirect(redirectTo)
 }
 
-// الصيدلية تسجّل التسليم
+// الصيدلية تسجّل التسليم + استحقاق تلقائي للطبيب
 export async function markDelivered(formData: FormData) {
   const u = await currentUser()
   if (!u) redirect("/sign-in")
   const prescriptionId = String(formData.get("prescriptionId") || "")
   if (!prescriptionId) redirect("/pharmacy-inbox")
+
+  const totalRaw = String(formData.get("invoiceTotal") || "").trim()
+  const totalNum = totalRaw ? Number(totalRaw) : 0
+  const invoiceTotal =
+    Number.isFinite(totalNum) && totalNum > 0 ? Math.round(totalNum) : 0
+
   try {
-    await prisma.prescription.updateMany({
+    // نتأكد إن الروشتة فعلاً "مؤكدة" وتخص هذه الصيدلية قبل التسليم
+    const rx = await prisma.prescription.findFirst({
       where: {
         id: prescriptionId,
         currentPharmacyId: u.id,
         status: "confirmed",
       },
-      data: { status: "delivered" },
+      select: { id: true, doctorId: true },
     })
+
+    if (rx) {
+      await prisma.prescription.update({
+        where: { id: rx.id },
+        data: { status: "delivered" },
+      })
+
+      // استحقاق تلقائي: الصيدلية مدينة للطبيب بنسبته من قيمة الفاتورة
+      if (invoiceTotal > 0 && rx.doctorId) {
+        const partnership = await prisma.partnership.findFirst({
+          where: { ownerId: rx.doctorId, partnerUserId: u.id },
+          select: { doctorPct: true },
+        })
+        const pct = partnership?.doctorPct ?? 0
+        const amount = Math.round((invoiceTotal * pct) / 100)
+        if (amount > 0) {
+          await accrueDebt({
+            creditorId: rx.doctorId,
+            debtorId: u.id,
+            amount,
+            refType: "prescription",
+            refId: rx.id,
+            description: `عمولة روشتة (${pct}% من ${invoiceTotal} ج.م)`,
+          })
+        }
+      }
+    }
   } catch {}
+
   revalidatePath("/pharmacy-inbox")
   redirect("/pharmacy-inbox?ok=delivered")
 }
@@ -210,5 +246,7 @@ export async function patientConfirm(formData: FormData) {
   } catch {}
 
   revalidatePath("/my-prescriptions")
-  redirect(ok ? "/my-prescriptions?ok=confirmed" : "/my-prescriptions?error=fail")
+  redirect(
+    ok ? "/my-prescriptions?ok=confirmed" : "/my-prescriptions?error=fail",
+  )
 }
