@@ -32,11 +32,10 @@ export async function routeServiceOrder(formData: FormData) {
   if (!u) redirect("/sign-in")
 
   const prescriptionId = String(formData.get("prescriptionId") || "").trim()
-  const appointmentId = String(formData.get("appointmentId") || "").trim()
   const partnerUserId = String(formData.get("partnerUserId") || "").trim()
   const type = String(formData.get("type") || "").trim()
   const items = parseItems(String(formData.get("items") || "[]"))
-  const back = appointmentId ? "/rx/" + appointmentId : "/dashboard"
+  const back = String(formData.get("back") || "").trim() || "/lab-routing"
 
   if (
     !prescriptionId ||
