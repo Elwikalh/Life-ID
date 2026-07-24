@@ -138,8 +138,8 @@ export default async function StaffPage({
             <QrCode className="h-4 w-4" />
             {t(
               {
-                ar: "الموظف يسجّل كمواطن أول، وبعدين ضيفه برقم موبايله أو رقمه القومي (نفس اللي في QR بطاقته).",
-                en: "Staff register as citizens first, then add them by mobile or national ID (same as on their card QR).",
+                ar: "الموظف يسجّل كمواطن أول، وبعدين ضيفه برقم موبايله أو ID التطبيق أو مسح QR بطاقته.",
+en: "Staff register as citizens first, then add them by mobile, App ID, or by scanning their card QR.",
               },
               lang,
             )}
@@ -150,7 +150,7 @@ export default async function StaffPage({
           <div>
             <label className="mb-1 flex items-center gap-1.5 text-sm font-medium text-slate-700">
               <Phone className="h-4 w-4 text-brand-500" />
-              {t({ ar: "موبايل / رقم قومي", en: "Mobile / national ID" }, lang)}
+{t({ ar: "موبايل / ID التطبيق / QR", en: "Mobile / App ID / QR" }, lang)}
             </label>
             <input
               type="text"
