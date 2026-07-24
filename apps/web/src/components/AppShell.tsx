@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { useState } from "react"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   HeartPulse,
   LayoutDashboard,
@@ -25,121 +25,217 @@ import {
   Radiation,
   Building2,
   Stethoscope,
-} from "lucide-react"
+} from "lucide-react";
 import {
   SignedIn,
   SignedOut,
   SignInButton,
   UserButton,
   useUser,
-} from "@clerk/nextjs"
-import { ROLE_LABELS, UI, t, type Bi, type Lang } from "../lib/i18n"
+} from "@clerk/nextjs";
+import { ROLE_LABELS, UI, t, type Bi, type Lang } from "../lib/i18n";
 
 type NavItem = {
-  href: string
-  label: Bi
-  icon: typeof LayoutDashboard
-  noActive?: boolean
-}
+  href: string;
+  label: Bi;
+  icon: typeof LayoutDashboard;
+  noActive?: boolean;
+};
 
-const BARE_PREFIXES = ["/sign-in", "/sign-up", "/onboarding", "/pending", "/admin"]
+const BARE_PREFIXES = [
+  "/sign-in",
+  "/sign-up",
+  "/onboarding",
+  "/pending",
+  "/admin",
+];
 
 function navForRole(role?: string): NavItem[] {
   const dashboard: NavItem = {
     href: "/dashboard",
     label: { ar: "لوحتي", en: "Dashboard" },
     icon: LayoutDashboard,
-  }
+  };
   const negotiations: NavItem = {
     href: "/negotiations",
     label: { ar: "التفاوض", en: "Negotiations" },
     icon: Handshake,
-  }
+  };
   const commissions: NavItem = {
     href: "/profile/commissions",
     label: { ar: "العمولات", en: "Commissions" },
     icon: Calculator,
-  }
+  };
+  const branches: NavItem = {
+    href: "/profile/branches",
+    label: { ar: "الفروع", en: "Branches" },
+    icon: Building2,
+  };
+  const staff: NavItem = {
+    href: "/profile/staff",
+    label: { ar: "الموظفون", en: "Staff" },
+    icon: Users,
+  };
   const profile: NavItem = {
     href: "/profile",
     label: { ar: "بروفايلي", en: "My Profile" },
     icon: UserCircle,
-  }
+  };
 
-  if (!role) return [dashboard]
+  if (!role) return [dashboard];
 
   if (role === "patient") {
     return [
       dashboard,
-      { href: "/search", label: { ar: "بحث وحجز", en: "Find & Book" }, icon: Search },
-      { href: "/appointments", label: { ar: "حجوزاتي", en: "Appointments" }, icon: CalendarDays },
-      { href: "/id", label: { ar: "بطاقتي الطبية", en: "Medical ID" }, icon: QrCode },
-      { href: "/my-prescriptions", label: { ar: "روشتاتي", en: "Prescriptions" }, icon: ClipboardList },
-      { href: "/reviews", label: { ar: "تقييماتي", en: "Reviews" }, icon: Star },
-    ]
+      {
+        href: "/search",
+        label: { ar: "بحث وحجز", en: "Find & Book" },
+        icon: Search,
+      },
+      {
+        href: "/appointments",
+        label: { ar: "حجوزاتي", en: "Appointments" },
+        icon: CalendarDays,
+      },
+      {
+        href: "/id",
+        label: { ar: "بطاقتي الطبية", en: "Medical ID" },
+        icon: QrCode,
+      },
+      {
+        href: "/my-prescriptions",
+        label: { ar: "روشتاتي", en: "Prescriptions" },
+        icon: ClipboardList,
+      },
+      {
+        href: "/reviews",
+        label: { ar: "تقييماتي", en: "Reviews" },
+        icon: Star,
+      },
+    ];
   }
 
   if (role === "pharma_company") {
     return [
       dashboard,
-      { href: "/profile/products", label: { ar: "المنتجات", en: "Products" }, icon: Package },
-      { href: "/profile/reps", label: { ar: "المندوبين", en: "Reps" }, icon: Users },
-      { href: "/profile/partnerships", label: { ar: "الشراكات", en: "Partnerships" }, icon: Handshake },
-      { href: "/profile/invitations", label: { ar: "الدعوات", en: "Invitations" }, icon: Inbox },
+      {
+        href: "/profile/products",
+        label: { ar: "المنتجات", en: "Products" },
+        icon: Package,
+      },
+      {
+        href: "/profile/reps",
+        label: { ar: "المندوبين", en: "Reps" },
+        icon: Users,
+      },
+      {
+        href: "/profile/partnerships",
+        label: { ar: "الشراكات", en: "Partnerships" },
+        icon: Handshake,
+      },
+      {
+        href: "/profile/invitations",
+        label: { ar: "الدعوات", en: "Invitations" },
+        icon: Inbox,
+      },
+      branches,
+      staff,
       commissions,
       profile,
-    ]
+    ];
   }
 
   if (role === "medical_rep") {
     return [
       dashboard,
-      { href: "/rep", label: { ar: "زياراتي", en: "My Visits" }, icon: MapPin },
+      {
+        href: "/rep",
+        label: { ar: "زياراتي", en: "My Visits" },
+        icon: MapPin,
+      },
       negotiations,
       commissions,
       profile,
-    ]
+    ];
   }
 
   if (role === "doctor") {
     return [
       dashboard,
-      { href: "/pharmacies", label: { ar: "صيدلياتي", en: "Pharmacies" }, icon: Pill },
-      { href: "/search?role=lab", label: { ar: "المعامل", en: "Laboratories" }, icon: FlaskConical, noActive: true },
-      { href: "/search?role=radiology", label: { ar: "مراكز الأشعة", en: "Radiology" }, icon: Radiation, noActive: true },
-      { href: "/search?role=hospital", label: { ar: "المستشفيات", en: "Hospitals" }, icon: Building2, noActive: true },
-      { href: "/search?role=clinic", label: { ar: "العيادات", en: "Clinics" }, icon: Stethoscope, noActive: true },
+      {
+        href: "/pharmacies",
+        label: { ar: "صيدلياتي", en: "Pharmacies" },
+        icon: Pill,
+      },
+      {
+        href: "/search?role=lab",
+        label: { ar: "المعامل", en: "Laboratories" },
+        icon: FlaskConical,
+        noActive: true,
+      },
+      {
+        href: "/search?role=radiology",
+        label: { ar: "مراكز الأشعة", en: "Radiology" },
+        icon: Radiation,
+        noActive: true,
+      },
+      {
+        href: "/search?role=hospital",
+        label: { ar: "المستشفيات", en: "Hospitals" },
+        icon: Building2,
+        noActive: true,
+      },
+      {
+        href: "/search?role=clinic",
+        label: { ar: "العيادات", en: "Clinics" },
+        icon: Stethoscope,
+        noActive: true,
+      },
       negotiations,
+      branches,
+      staff,
       commissions,
       profile,
-    ]
+    ];
   }
 
   if (role === "pharmacy") {
     return [
       dashboard,
-      { href: "/pharmacy-inbox", label: { ar: "روشتات واردة", en: "Incoming Rx" }, icon: Inbox },
+      {
+        href: "/pharmacy-inbox",
+        label: { ar: "روشتات واردة", en: "Incoming Rx" },
+        icon: Inbox,
+      },
       negotiations,
+      branches,
+      staff,
       commissions,
       profile,
-    ]
+    ];
   }
 
   // عيادة / مستشفى / معمل / أشعة / طوارئ
   return [
     dashboard,
-    { href: "/search", label: { ar: "الشبكة الطبية", en: "Medical Network" }, icon: Search },
+    {
+      href: "/search",
+      label: { ar: "الشبكة الطبية", en: "Medical Network" },
+      icon: Search,
+    },
     negotiations,
+    branches,
+    staff,
     commissions,
     profile,
-  ]
+  ];
 }
 
 function LangToggle({ lang }: { lang: Lang }) {
   function change(next: Lang) {
-    if (next === lang) return
-    document.cookie = `lang=${next}; path=/; max-age=31536000`
-    window.location.reload()
+    if (next === lang) return;
+    document.cookie = `lang=${next}; path=/; max-age=31536000`;
+    window.location.reload();
   }
   return (
     <div className="flex items-center overflow-hidden rounded-lg border border-black/10 text-xs">
@@ -157,35 +253,35 @@ function LangToggle({ lang }: { lang: Lang }) {
         </button>
       ))}
     </div>
-  )
+  );
 }
 
 export default function AppShell({
   lang,
   children,
 }: {
-  lang: Lang
-  children: React.ReactNode
+  lang: Lang;
+  children: React.ReactNode;
 }) {
-  const pathname = usePathname() || "/"
-  const { isLoaded, isSignedIn, user } = useUser()
-  const [open, setOpen] = useState(false)
+  const pathname = usePathname() || "/";
+  const { isLoaded, isSignedIn, user } = useUser();
+  const [open, setOpen] = useState(false);
 
   const isBare =
-    pathname === "/" || BARE_PREFIXES.some((p) => pathname.startsWith(p))
+    pathname === "/" || BARE_PREFIXES.some((p) => pathname.startsWith(p));
 
   if (isBare || !isLoaded || !isSignedIn) {
-    return <>{children}</>
+    return <>{children}</>;
   }
 
-  const role = (user?.publicMetadata as { role?: string } | undefined)?.role
-  const roleLabel = role && ROLE_LABELS[role] ? t(ROLE_LABELS[role], lang) : ""
-  const items = navForRole(role)
+  const role = (user?.publicMetadata as { role?: string } | undefined)?.role;
+  const roleLabel = role && ROLE_LABELS[role] ? t(ROLE_LABELS[role], lang) : "";
+  const items = navForRole(role);
 
   const fullName =
     [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
     user?.primaryEmailAddress?.emailAddress ||
-    t(UI.user, lang)
+    t(UI.user, lang);
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -197,8 +293,8 @@ export default function AppShell({
         {items.map((item) => {
           const active =
             !item.noActive &&
-            (pathname === item.href || pathname.startsWith(item.href + "/"))
-          const Icon = item.icon
+            (pathname === item.href || pathname.startsWith(item.href + "/"));
+          const Icon = item.icon;
           return (
             <Link
               key={item.href}
@@ -214,14 +310,14 @@ export default function AppShell({
               <Icon className="h-5 w-5 shrink-0" />
               {t(item.label, lang)}
             </Link>
-          )
+          );
         })}
       </nav>
       <div className="border-t border-black/5 px-5 py-3 text-xs text-slate-400">
         © Life ID
       </div>
     </div>
-  )
+  );
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -254,7 +350,9 @@ export default function AppShell({
 
           <div className="flex flex-1 items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-400 sm:max-w-md">
             <Search className="h-4 w-4" />
-            <span className="hidden sm:inline">{t(UI.searchPlaceholder, lang)}</span>
+            <span className="hidden sm:inline">
+              {t(UI.searchPlaceholder, lang)}
+            </span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -292,5 +390,5 @@ export default function AppShell({
         </main>
       </div>
     </div>
-  )
+  );
 }
