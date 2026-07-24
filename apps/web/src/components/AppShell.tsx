@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { useState } from "react"
 import {
   HeartPulse,
   LayoutDashboard,
@@ -26,22 +26,22 @@ import {
   Radiation,
   Building2,
   Stethoscope,
-} from "lucide-react";
+} from "lucide-react"
 import {
   SignedIn,
   SignedOut,
   SignInButton,
   UserButton,
   useUser,
-} from "@clerk/nextjs";
-import { ROLE_LABELS, UI, t, type Bi, type Lang } from "../lib/i18n";
+} from "@clerk/nextjs"
+import { ROLE_LABELS, UI, t, type Bi, type Lang } from "../lib/i18n"
 
 type NavItem = {
-  href: string;
-  label: Bi;
-  icon: typeof LayoutDashboard;
-  noActive?: boolean;
-};
+  href: string
+  label: Bi
+  icon: typeof LayoutDashboard
+  noActive?: boolean
+}
 
 const BARE_PREFIXES = [
   "/sign-in",
@@ -49,46 +49,46 @@ const BARE_PREFIXES = [
   "/onboarding",
   "/pending",
   "/admin",
-];
+]
 
 function navForRole(role?: string): NavItem[] {
   const dashboard: NavItem = {
     href: "/dashboard",
     label: { ar: "لوحتي", en: "Dashboard" },
     icon: LayoutDashboard,
-  };
+  }
   const negotiations: NavItem = {
     href: "/negotiations",
     label: { ar: "التفاوض", en: "Negotiations" },
     icon: Handshake,
-  };
+  }
   const commissions: NavItem = {
     href: "/profile/commissions",
     label: { ar: "العمولات", en: "Commissions" },
     icon: Calculator,
-  };
+  }
   const branches: NavItem = {
     href: "/profile/branches",
     label: { ar: "الفروع", en: "Branches" },
     icon: Building2,
-  };
+  }
   const staff: NavItem = {
     href: "/profile/staff",
     label: { ar: "الموظفون", en: "Staff" },
     icon: Users,
-  };
+  }
   const wallet: NavItem = {
     href: "/profile/wallet",
     label: { ar: "المحفظة", en: "Wallet" },
     icon: Wallet,
-  };
+  }
   const profile: NavItem = {
     href: "/profile",
     label: { ar: "بروفايلي", en: "My Profile" },
     icon: UserCircle,
-  };
+  }
 
-  if (!role) return [dashboard];
+  if (!role) return [dashboard]
 
   if (role === "patient") {
     return [
@@ -118,7 +118,7 @@ function navForRole(role?: string): NavItem[] {
         label: { ar: "تقييماتي", en: "Reviews" },
         icon: Star,
       },
-    ];
+    ]
   }
 
   if (role === "pharma_company") {
@@ -149,7 +149,7 @@ function navForRole(role?: string): NavItem[] {
       commissions,
       wallet,
       profile,
-    ];
+    ]
   }
 
   if (role === "medical_rep") {
@@ -163,7 +163,7 @@ function navForRole(role?: string): NavItem[] {
       negotiations,
       commissions,
       profile,
-    ];
+    ]
   }
 
   if (role === "doctor") {
@@ -204,7 +204,7 @@ function navForRole(role?: string): NavItem[] {
       commissions,
       wallet,
       profile,
-    ];
+    ]
   }
 
   if (role === "pharmacy") {
@@ -221,7 +221,7 @@ function navForRole(role?: string): NavItem[] {
       commissions,
       wallet,
       profile,
-    ];
+    ]
   }
 
   // عيادة / مستشفى / معمل / أشعة / طوارئ
@@ -238,14 +238,14 @@ function navForRole(role?: string): NavItem[] {
     commissions,
     wallet,
     profile,
-  ];
+  ]
 }
 
 function LangToggle({ lang }: { lang: Lang }) {
   function change(next: Lang) {
-    if (next === lang) return;
-    document.cookie = `lang=${next}; path=/; max-age=31536000`;
-    window.location.reload();
+    if (next === lang) return
+    document.cookie = `lang=${next}; path=/; max-age=31536000`
+    window.location.reload()
   }
   return (
     <div className="flex items-center overflow-hidden rounded-lg border border-black/10 text-xs">
@@ -263,35 +263,35 @@ function LangToggle({ lang }: { lang: Lang }) {
         </button>
       ))}
     </div>
-  );
+  )
 }
 
 export default function AppShell({
   lang,
   children,
 }: {
-  lang: Lang;
-  children: React.ReactNode;
+  lang: Lang
+  children: React.ReactNode
 }) {
-  const pathname = usePathname() || "/";
-  const { isLoaded, isSignedIn, user } = useUser();
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname() || "/"
+  const { isLoaded, isSignedIn, user } = useUser()
+  const [open, setOpen] = useState(false)
 
   const isBare =
-    pathname === "/" || BARE_PREFIXES.some((p) => pathname.startsWith(p));
+    pathname === "/" || BARE_PREFIXES.some((p) => pathname.startsWith(p))
 
   if (isBare || !isLoaded || !isSignedIn) {
-    return <>{children}</>;
+    return <>{children}</>
   }
 
-  const role = (user?.publicMetadata as { role?: string } | undefined)?.role;
-  const roleLabel = role && ROLE_LABELS[role] ? t(ROLE_LABELS[role], lang) : "";
-  const items = navForRole(role);
+  const role = (user?.publicMetadata as { role?: string } | undefined)?.role
+  const roleLabel = role && ROLE_LABELS[role] ? t(ROLE_LABELS[role], lang) : ""
+  const items = navForRole(role)
 
   const fullName =
     [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
     user?.primaryEmailAddress?.emailAddress ||
-    t(UI.user, lang);
+    t(UI.user, lang)
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -303,8 +303,8 @@ export default function AppShell({
         {items.map((item) => {
           const active =
             !item.noActive &&
-            (pathname === item.href || pathname.startsWith(item.href + "/"));
-          const Icon = item.icon;
+            (pathname === item.href || pathname.startsWith(item.href + "/"))
+          const Icon = item.icon
           return (
             <Link
               key={item.href}
@@ -320,14 +320,14 @@ export default function AppShell({
               <Icon className="h-5 w-5 shrink-0" />
               {t(item.label, lang)}
             </Link>
-          );
+          )
         })}
       </nav>
       <div className="border-t border-black/5 px-5 py-3 text-xs text-slate-400">
         © Life ID
       </div>
     </div>
-  );
+  )
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -367,13 +367,13 @@ export default function AppShell({
 
           <div className="flex items-center gap-3">
             <LangToggle lang={lang} />
-            <button
-              type="button"
+            <Link
+              href="/notifications"
               className="rounded-lg border border-black/10 p-2 text-slate-500 hover:text-slate-700"
               aria-label={t(UI.notifications, lang)}
             >
               <Bell className="h-5 w-5" />
-            </button>
+            </Link>
             <div className="hidden text-end leading-tight sm:block">
               <div className="text-sm font-semibold text-slate-700">
                 {fullName}
@@ -400,5 +400,5 @@ export default function AppShell({
         </main>
       </div>
     </div>
-  );
+  )
 }
